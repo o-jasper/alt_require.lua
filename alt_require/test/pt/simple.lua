@@ -29,3 +29,15 @@ req("alt_require.test.toys.reqme", {pt("block_error")(tree_cnts)})
 
 print("--- My files were from:")
 for pkg, _ in pairs(tree_cnts) do print(pkg, alt_require.findfile(pkg)) end
+
+print("--- Test breaking it")
+
+local break_pkg = "alt_require.test.toys." ..
+   ({"reqme", "subreqme", "subsubreqme"})[math.random(3)]
+tree_cnts[break_pkg] = false
+local r, err = pcall(function()
+      req("alt_require.test.toys.reqme", {pt("block_error")({})})
+      return true
+end)
+assert(r == false)
+assert(string.format("/home/jasper/.lualibs/alt_require/pt/block_error.lua:14: nothing in package %s/", break_pkg))
