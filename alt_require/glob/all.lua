@@ -1,17 +1,18 @@
+
 return {
    __envname = "all",
-   loadstring = loadstring,  -- An escape
+   loadstring = loadstring,  -- An escape.
    coroutine = coroutine,
    unpack = unpack,
    xpcall = xpcall,
    setmetatable = setmetatable,
    dofile = dofile,
    pcall = pcall,
-   load = load,  -- An escape
+   load = load,  -- An escape.
    rawlen = rawlen,
    rawget = rawget,
    os = os,
-   package = package,  -- Recurses, breaks `c.copy_meta`
+   package = package,  -- Recurses, breaks `c.copy_meta`(NOTE: not sure what i meant!)
    getmetatable = getmetatable,
    arg = arg,
    tostring = tostring,
