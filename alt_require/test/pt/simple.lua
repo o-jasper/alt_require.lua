@@ -3,7 +3,7 @@ local function r(x) return require("alt_require" .. x) end
 local list, cnts, tree_cnts = {}, {}, {}
 local tabulizer = r(".pt.tabulize")(list)
 local counter   = r(".pt.keep_count")(cnts)
-local tree_counter   = r(".pt.keep_tree_count")(tree_cnts)
+local tree_counter   = r(".pt.inpackage_counts")(tree_cnts)
 local function req(str)
    return r("").alt_require({ in_package = str },
       {r ".pt.print", tabulizer, counter, tree_counter}, r ".glob.simple",
