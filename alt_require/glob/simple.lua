@@ -1,0 +1,23 @@
+return {
+   __envname = "simple",
+   unpack = unpack,
+   setmetatable = setmetatable,
+   getmetatable = getmetatable,
+   tostring = tostring,
+   bit32 = bit32,
+   utf8 = utf8,
+   string = string,
+   tonumber = tonumber,
+   math = math,
+   select = select,
+   assert = assert,
+   print = print,
+   table = table,
+   next = next,
+   pairs = pairs,
+   _VERSION = _VERSION,
+   rawequal = rawequal,
+   error = error,
+   type = type,
+   ipairs = ipairs
+}
