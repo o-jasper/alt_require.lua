@@ -74,7 +74,7 @@ function This:require_fun(envfun)
    local envfun = envfun or self.envfun
    return function(file)
       local ret = self.loaded[file]
-      if not retgot then
+      if not ret then
          local file_path = ar.alt_findfile(file)
          ret = file_path and loadfile(file_path, nil, envfun(self, file))()
          self.loaded[file] = ret

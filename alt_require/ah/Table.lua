@@ -103,7 +103,7 @@ function This:enforced_indexat(from, cnts)
             return got
          end
       else
-         error("aint allowed here")
+         error(key .. " aint allowed here")
       end
    end
 end
