@@ -10,7 +10,7 @@ local tree_counter   = pt("inpackage_counts")(tree_cnts)
 local function req(str, pts)
    return alt_require.alt_require({ in_package = str },
       pts, r ".glob.simple",
-      { __envname="reqself", require = function(s) return req(s, ptrs) end })(str)()
+      { __envname="reqself", require = function(s) return req(s, pts) end })(str)()
 end
 
 req("alt_require.test.toys.reqme", {r ".pt.print", tabulizer, counter, tree_counter})
