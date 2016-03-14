@@ -21,6 +21,7 @@ local function alt_require_plain(env)
    end
 end
 
+-- Chains pass-throughs together, so you can just provide a list.
 local function chain_pt(list)
    return function(cond, el, key, val)
       local ret = val
@@ -66,9 +67,9 @@ local function alt_require(cond, pass_through, ...)
    return alt_require_plain(globals(cond, pass_through, ...))
 end
 
-return { alt_findfile      = alt_findfile,
-         alt_require_plain = alt_require_plain,
+return { findfile      = alt_findfile,
+         require_plain = alt_require_plain,
 
-         globals     = globals,
-         alt_require = alt_require,
+         globals = globals,
+         require = alt_require,
 }

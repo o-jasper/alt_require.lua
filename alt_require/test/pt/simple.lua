@@ -8,7 +8,7 @@ local tabulizer = pt("tabulize")(list)
 local counter   = pt("keep_count")(cnts)
 local tree_counter   = pt("inpackage_counts")(tree_cnts)
 local function req(str, pts)
-   return alt_require.alt_require({ in_package = str },
+   return alt_require.require({ in_package = str },
       pts, r ".glob.simple",
       { __envname="reqself", require = function(s) return req(s, pts) end })(str)()
 end
@@ -28,4 +28,4 @@ print("---")
 req("alt_require.test.toys.reqme", {pt("block_error")(tree_cnts)})
 
 print("--- My files were from:")
-for pkg, _ in pairs(tree_cnts) do print(pkg, alt_require.alt_findfile(pkg)) end
+for pkg, _ in pairs(tree_cnts) do print(pkg, alt_require.findfile(pkg)) end
