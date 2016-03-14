@@ -41,7 +41,11 @@ local function globals_index(cond, pass_through, ...)
          local val = el[key]
          if val ~= nil then
             -- this[key] = val to memoize... But then control is lost.
-            return pass_through and pass_through(cond, el, key, val) or val
+            if pass_through then
+               return pass_through(cond, el, key, val)
+            else
+               return val
+            end
          end
       end
       return pass_through and pass_through(cond, {}) or nil
