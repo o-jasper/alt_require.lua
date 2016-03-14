@@ -22,16 +22,16 @@ local function alt_require_plain(env)
 end
 
 local function chain_pt(list)
-   return function(el, key, val)
+   return function(cond, el, key, val)
       local ret = val
       for _, fun in ipairs(list) do
-         ret = fun(el, key, ret)
+         ret = fun(cond, el, key, ret)
       end
       return ret
    end
 end
 
-local function globals_index(pass_through, ...)
+local function globals_index(cond, pass_through, ...)
    local list = {...}
    if type(pass_through) == "table" then
       pass_through = chain_pt(pass_through)
@@ -40,26 +40,26 @@ local function globals_index(pass_through, ...)
       for _, el in ipairs(list) do
          local val = el[key]
          if val ~= nil then
-            this[key] = val
-            return pass_through and pass_through(el, key, val) or val
+            -- this[key] = val to memoize... But then control is lost.
+            return pass_through and pass_through(cond, el, key, val) or val
          end
       end
-      return pass_through and pass_through({}) or nil
+      return pass_through and pass_through(cond, {}) or nil
    end
 end
 
 -- Accepts sequence of tables with globals in them, if `pass_through`,
 --  then it is passed through that for alteration/recording.
-local function globals(pass_through, ...)
+local function globals(cond, pass_through, ...)
    for _, el in ipairs{...} do assert(type(el) == "table") end
-   return setmetatable({}, {__index=globals_index(pass_through, ...)})
+   return setmetatable({}, {__index=globals_index(cond, pass_through, ...)})
 end
 
 -- Produces a function like `require` but finding files itself, and
 -- providing its own globals.
 -- Including the global `require`, so that can be made to do whatever.
-local function alt_require(pass_through, ...)
-   return alt_require_plain(globals(pass_through, ...))
+local function alt_require(cond, pass_through, ...)
+   return alt_require_plain(globals(cond, pass_through, ...))
 end
 
 return { alt_findfile      = alt_findfile,
