@@ -15,9 +15,12 @@ function This:new(new)
    return new
 end
 
+This.under_path = ""
+
 function This:init()
    self.constants = {}
-   assert(self.under_uri, "Need to specify what server to connect to.")
+   assert(self.under_site, "Need to specify what server to connect to.")
+   self.under_uri = self.under_uri or self.under_site .. "/" .. self.under_path
 end
 
 function This:get(method, name, args, id)

@@ -9,9 +9,11 @@ function This:new(new)
    return new
 end
 
-function This:init()
-   assert(self.our_path_portion)
+-- Can prepend things and change the server-end correspondingly, of course.
+This.matcher = "^/?([^/]+)/?([^/]+)/?([^/]+)$"
+This.under_path = ""
 
+function This:init()
    self.prev_id = 0
    self.globals = self.globals or {}
    self.ongoing = self.ongoing or {}
@@ -23,18 +25,20 @@ function This:new_id(to)
    return tostring(self.prev_id)
 end
 
--- Can prepend things and change the server-end correspondingly, of course.
-This.our_path_portion = "^/?([^/]+)/?([^/]+)/?([^/]+)$"
 
 function This:pegasus_respond(req, rep)
-   local method, name, id = string.match(req:path() or "", self.our_path_portion)
-   if name then
-      -- Currently at least, pegasus needs headers out first.
-      local input_data = req:receiveBody()
-      local str = self:respond(method, name, id, input_data)
-      -- TODO header depends on `self.store`.
-      rep:addHeader("Content-Type", "bin/storebin"):write(str)
-      return true
+   local path = req:path() or ""
+   if string.sub(path, 2, #self.under_path + 1) == self.under_path then
+      local method, name, id =
+         string.match(string.sub(path, #self.under_path + 2),  self.matcher)
+      if name then
+         -- Currently at least, pegasus needs headers out first.
+         local input_data = req:receiveBody()
+         local str = self:respond(method, name, id, input_data)
+         -- TODO header depends on `self.store`.
+         rep:addHeader("Content-Type", "bin/storebin"):write(str)
+         return true
+      end
    end
 end
 
