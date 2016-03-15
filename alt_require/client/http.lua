@@ -23,10 +23,13 @@ function This:init()
    self.under_uri = self.under_uri or self.under_site .. "/" .. self.under_path
 
    self.table_meta = {}
-   for _, method in ipairs{"index", "newindex", "pairs", "call"} do
+   for _, method in ipairs{"newindex", "pairs", "call"} do
       self.table_meta["__" .. method] = function(this, ...)
          return self:get(method, this.__name, {...}, this.__id)
       end
+   end
+   self.table_meta.__index = function(this, key)
+      return self:get("index", key, nil, this.__id)
    end
 
    -- TODO rest off limits..

@@ -74,8 +74,8 @@ function This:respond(method, name, id, input_data)
       if self.check_for_fun then in_vals = turn_tables(self.ongoing, in_vals) end
       ret = self.ongoing[id](unpack(in_vals))
    elseif method == "index" then
-      assert(in_vals)
-      ret = self.ongoing[id][in_vals[1]]
+      assert(not in_vals)
+      ret = self.ongoing[id][name]
    elseif method == "newindex" then
       local key, value = unpack(in_vals)
       self.ongoing[id][key] = value
