@@ -1,13 +1,10 @@
 ## Lua global and package control
 
-Experimentation with using `load` to record, determine, and/or restrict things.
-Use `load` alone! Basically want to distinctions between `lua` and `luajit`.
+"Sandboxing" using `loadfile`, replacing the environment to record, determine,
+and/or restrict things. Basically want to distinctions between `lua` and `luajit`.
 (it appears to work on both)
 
-Basically, it could be a mandatory access control tool, a tool to analyse.
-
 # Magic across-server lua
-
 Uses the above and storebin, Pegasus, lua-socket to keep track of
 objects on the other side.
 
