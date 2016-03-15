@@ -1,9 +1,15 @@
+local function a(x,y) return y .. x .. y end
+
 return {
-   a = function(x,y) return y .. x .. y end,
+   a = a,
    b = function(x) return "(" .. x .. ")" end,
    c = { d = function(x) return "X" .. x .. "X" end },
 
    ff = function(fun, y)
       return fun(y) .. "Z" .. y
-   end
+   end,
+
+   gg = function(tab, x)
+      return a(tab.d(x), x)
+   end,
 }

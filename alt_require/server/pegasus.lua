@@ -46,10 +46,10 @@ This.check_for_fun = true
 local function turn_tables(ongoing, tab)
    for k,v in pairs(tab) do
       if type(v) == "table" then
-         if v.__is_server_fun then  -- Get the function.
+         if v.__is_server_type then  -- Get the function/table.
             tab[k] = ongoing[v.__id]
-         elseif not v.__is_server_table then
-            turn_tables(ongoing, v)
+         else
+            tab[k] = turn_tables(ongoing, v)
          end
       end
    end
@@ -71,7 +71,7 @@ function This:respond(method, name, id, input_data)
       ret = self.globals[name]
    elseif method == "call" then
       assert(in_vals)
-      if self.check_for_fun then turn_tables(self.ongoing, in_vals) end
+      if self.check_for_fun then in_vals = turn_tables(self.ongoing, in_vals) end
       ret = self.ongoing[id](unpack(in_vals))
    elseif method == "index" then
       assert(in_vals)

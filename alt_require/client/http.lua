@@ -30,7 +30,7 @@ function This:init()
    end
 
    -- TODO rest off limits..
-   self.fun_meta = { __is_server_fun=true, __call = self.table_meta.__call }
+   self.fun_meta = { __call = self.table_meta.__call }
 end
 
 function This:get(method, name, args, id)
@@ -75,11 +75,13 @@ function This:get(method, name, args, id)
       if self.funs_as_funs then  -- Note then you cannot send the function back.
          ret = function(...) return self:get("call", name, {...}, id) end
       else
-         ret = setmetatable({ __is_server_fun=true, __id=id, __name=name}, self.fun_meta)
+         ret = setmetatable({ __is_server_type="function", __id=id, __name=name},
+            self.fun_meta)
       end
    elseif data.is_table then  -- Is a table.
       assert(not data.val)
-      ret = setmetatable({ __is_server_table=true, __id=id, __name=name }, self.table_meta)
+      ret = setmetatable({ __is_server_type="table", __id=id, __name=name },
+         self.table_meta)
    elseif data.is_error then -- Shouldnt be touching this.
       error(string.format("Server doesn't allow touching %q", req_args.url))
    elseif data.is_local_get then  -- Mission creep.
