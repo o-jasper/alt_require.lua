@@ -4,13 +4,7 @@
 and/or restrict things. Basically want to distinctions between `lua` and `luajit`.
 (it appears to work on both)
 
-# Magic across-server lua
-NOTE not finished yet; TODO:
-
-* On-server stuff sent back to the client needs dealing with.
-* Metamethods need dealing with.
-* Still unknown unknowns. (it is likely that this will only work on subset)
-
+# ~~Magic~~ across-server lua
 Uses the above and storebin, Pegasus, lua-socket to keep track of
 objects on the other side.
 
@@ -21,6 +15,18 @@ Could be useful for:
 * Mandatory Access Control, if it is desired to isolate portions of code.
 
 * Magic moving code between client and server. However, clouds are bad.
+
+(Current)Limitations:
+
+* Unless the function came from the server -as-is-, the client cannot send
+  functions to the server.
+
+* Tables that are sent are copied each time.
+
+  Should be possible to clear out these tables and add a metatable as to
+  en-server-side them. (Unclear *when* to do this)
+
+* Unknowns..
 
 ### Dependencies
 The non-client server stuff just uses plain lua.(no dependencies)
@@ -47,3 +53,6 @@ I wanted a permissive license, it is under the MIT license accompanied.
 * Apply it to something..
 
 * Can javascript talk to it?
+
+* `name` passed each time is pretty much useless, it is basically always
+  `"require"`.
