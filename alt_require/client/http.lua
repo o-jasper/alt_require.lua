@@ -21,9 +21,17 @@ function This:init()
    self.constants = {}
    assert(self.under_site, "Need to specify what server to connect to.")
    self.under_uri = self.under_uri or self.under_site .. "/" .. self.under_path
+
+   self.table_meta = {}
+   for _, method in ipairs{"index", "newindex", "pairs", "call"} do
+      self.table_meta["__" .. method] = function(this, ...)
+         return self:get(method, this.__name, {...}, this.__id)
+      end
+   end
 end
 
 function This:get(method, name, args, id)
+   print(method, name, id, unpack(args or {}))
    assert(method)
 
    local const = self.constants[name]
@@ -60,14 +68,11 @@ function This:get(method, name, args, id)
    local data = self.store.decode(table.concat(got))  -- TODO not other shit in there?
    local id, ret = data.id, nil
    if data.is_fun then  -- It is a function, that contains the id to track it.
+      assert(not data.val)
       ret = function(...) return self:get("call", name, {...}, id) end
    elseif data.is_table then  -- Is a table.
-      ret = function(_, method)  -- Double meta.
-         return function(_, ...)
-            return self:get(name, string.match(method, "^__(.+)$"), {...}, id)
-         end
-      end
-      return setmetatable({}, setmetatable({}, {__index=meta_index}))
+      assert(not data.val)
+      ret = setmetatable({ __id=id, __name=name }, self.table_meta)
    elseif data.is_error then -- Shouldnt be touching this.
       error(string.format("Server doesn't allow touching %q", req_args.url))
    elseif data.is_local_get then  -- Mission creep.
@@ -95,7 +100,8 @@ function This:require_fun(selection, local_require)
       end
 end
 function This:globals(require_selection, local_require)
-   return { require = self:require_fun(require_selection, local_require) }
+   return { __envname="http-client",
+            require = self:require_fun(require_selection, local_require) }
 end
 
 return This
