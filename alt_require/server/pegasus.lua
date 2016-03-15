@@ -30,9 +30,7 @@ function This:pegasus_respond(req, rep)
    local method, name, id = string.match(req:path() or "", self.our_path_portion)
    if name then
       -- Currently at least, pegasus needs headers out first.
-      for k,v in pairs(req:headers()) do print("h", k,v) end
       local input_data = req:receiveBody()
-      print("IN", input_data)
       local str = self:respond(method, name, id, input_data)
       -- TODO header depends on `self.store`.
       rep:addHeader("Content-Type", "bin/storebin"):write(str)
@@ -41,7 +39,6 @@ function This:pegasus_respond(req, rep)
 end
 
 function This:respond(method, name, id, input_data)
-   print(method, name, id, input_data)
    local ret = nil
 
    -- If some object floating in here.

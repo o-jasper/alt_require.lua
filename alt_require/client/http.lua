@@ -80,22 +80,19 @@ end
 
 This.require = require
 
-function This:require_fun(selection)
+function This:require_fun(selection, local_require)
    local fun = self:get("index", "require", nil, "global")
    return (selection == nil and fun) or
       function(str)
-         print("***", str)
          if selection[str] then
             return fun(str)
          else
-            return self.require(str)
+            return (local_require or self.require)(str)
          end
       end
 end
-function This:globals(require_selection)
-   local ret= { require = self:require_fun(require_selection) }
-   print(ret.require)
-   return ret
+function This:globals(require_selection, local_require)
+   return { require = self:require_fun(require_selection, local_require) }
 end
 
 return This
