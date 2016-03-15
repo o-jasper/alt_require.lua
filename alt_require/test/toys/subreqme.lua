@@ -2,6 +2,8 @@ print(1 + 2)
 
 -- require "idontexist, so what now"
 
-require "alt_require.test.toys.subsubreqme"
+local ssrm = require "alt_require.test.toys.subsubreqme"
+
+print(unpack(ssrm))
 
 return function(x, y) return x * y end
