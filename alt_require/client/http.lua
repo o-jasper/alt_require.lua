@@ -22,12 +22,15 @@ function This:init()
    assert(self.under_site, "Need to specify what server to connect to.")
    self.under_uri = self.under_uri or self.under_site .. "/" .. self.under_path
 
-   self.table_meta = { __is_server_sync=true }
+   self.table_meta = {}
    for _, method in ipairs{"index", "newindex", "pairs", "call"} do
       self.table_meta["__" .. method] = function(this, ...)
          return self:get(method, this.__name, {...}, this.__id)
       end
    end
+
+   -- TODO rest off limits..
+   self.fun_meta = { __is_server_fun=true, __call = self.table_meta.__call }
 end
 
 function This:get(method, name, args, id)
@@ -69,10 +72,14 @@ function This:get(method, name, args, id)
    local id, ret = data.id, nil
    if data.is_fun then  -- It is a function, that contains the id to track it.
       assert(not data.val)
-      ret = function(...) return self:get("call", name, {...}, id) end
+      if self.funs_as_funs then  -- Note then you cannot send the function back.
+         ret = function(...) return self:get("call", name, {...}, id) end
+      else
+         ret = setmetatable({ __is_server_fun=true, __id=id, __name=name}, self.fun_meta)
+      end
    elseif data.is_table then  -- Is a table.
       assert(not data.val)
-      ret = setmetatable({ __id=id, __name=name }, self.table_meta)
+      ret = setmetatable({ __is_server_table=true, __id=id, __name=name }, self.table_meta)
    elseif data.is_error then -- Shouldnt be touching this.
       error(string.format("Server doesn't allow touching %q", req_args.url))
    elseif data.is_local_get then  -- Mission creep.
@@ -83,6 +90,10 @@ function This:get(method, name, args, id)
       -- synchronized across.
       ret = data.val
    end
+
+  -- Note logic that require that type could have issues..
+   -- can be fir
+   assert(type(ret) ~= "function")
 
    return ret
 end
