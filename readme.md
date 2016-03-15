@@ -5,6 +5,12 @@ and/or restrict things. Basically want to distinctions between `lua` and `luajit
 (it appears to work on both)
 
 # Magic across-server lua
+NOTE not finished yet; TODO:
+
+* On-server stuff sent back to the client needs dealing with.
+* Metamethods need dealing with.
+* Still unknown unknowns. (it is likely that this will only work on subset)
+
 Uses the above and storebin, Pegasus, lua-socket to keep track of
 objects on the other side.
 
@@ -39,3 +45,5 @@ I wanted a permissive license, it is under the MIT license accompanied.
 * Better testing. What do metatables on the server do?
 
 * Apply it to something..
+
+* Can javascript talk to it?
