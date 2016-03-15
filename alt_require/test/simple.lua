@@ -30,10 +30,12 @@ req("alt_require.test.toys.reqme", {pt("block_error")(tree_cnts)})
 print("--- My files were from:")
 for pkg, _ in pairs(tree_cnts) do print(pkg, alt_require.findfile(pkg)) end
 
-print("--- Test breaking it")
 
+math.randomseed(math.floor(os.time() + 100000*os.clock()))
 local break_pkg = "alt_require.test.toys." ..
    ({"reqme", "subreqme", "subsubreqme"})[math.random(3)]
+print("--- Test breaking", break_pkg)
+
 tree_cnts[break_pkg] = false
 local r, err = pcall(function()
       req("alt_require.test.toys.reqme", {pt("block_error")({})})
