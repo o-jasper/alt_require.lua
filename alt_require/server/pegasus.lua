@@ -48,15 +48,18 @@ function This:respond(method, name, id, input_data)
 
    -- If some object floating in here.
    local in_vals = #input_data > 0 and self.store.decode(input_data)
-   print(method, name, id, #input_data, in_vals and #in_vals)
+   print(method, name, id, #input_data, in_vals and #in_vals,
+         in_vals and table.concat(in_vals, " , "))
    if id == "global" then  -- A global. (recommended only a handful, or only `require`)
       assert(not in_vals)
       assert(({index=true, newindex=self.allow_set_global})[method])
       assert(method == "index")
       ret = self.globals[name]
    elseif method == "call" then
+      assert(in_vals)
       ret = self.ongoing[id](unpack(in_vals))
    elseif method == "index" then
+      assert(in_vals)
       ret = self.ongoing[id][in_vals[1]]
    elseif method == "newindex" then
       local key, value = unpack(in_vals)

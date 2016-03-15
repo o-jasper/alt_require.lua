@@ -22,7 +22,7 @@ function This:init()
    assert(self.under_site, "Need to specify what server to connect to.")
    self.under_uri = self.under_uri or self.under_site .. "/" .. self.under_path
 
-   self.table_meta = {}
+   self.table_meta = { __is_server_sync=true }
    for _, method in ipairs{"index", "newindex", "pairs", "call"} do
       self.table_meta["__" .. method] = function(this, ...)
          return self:get(method, this.__name, {...}, this.__id)
@@ -76,13 +76,14 @@ function This:get(method, name, args, id)
    elseif data.is_error then -- Shouldnt be touching this.
       error(string.format("Server doesn't allow touching %q", req_args.url))
    elseif data.is_local_get then  -- Mission creep.
-      assert(self.logal_get)
+      assert(self.local_get)
       ret = self:local_get(name, args, id, method)
    else
       -- Can still be a tree-shaped table, but in that case it is not
       -- synchronized across.
       ret = data.val
    end
+
    return ret
 end
 
