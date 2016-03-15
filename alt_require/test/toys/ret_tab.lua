@@ -9,7 +9,7 @@ return {
       return fun(y) .. "Z" .. y
    end,
 
-   gg = function(tab, x)  -- TODO for no apparent reason tries to call pairs.
+   gg = function(tab, x)
       return a(tab.d(x), x)
    end,
 }

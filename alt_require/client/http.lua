@@ -23,7 +23,7 @@ function This:init()
    self.under_uri = self.under_uri or self.under_site .. "/" .. self.under_path
 
    self.table_meta = {}
-   for _, method in ipairs{"newindex", "call"} do
+   for _, method in ipairs{"newindex", "call", "pairs"} do
       self.table_meta["__" .. method] = function(this, ...)
          return self:get(method, this.__name, {...}, this.__id)
       end
@@ -36,6 +36,27 @@ function This:init()
    self.fun_meta = { __call = self.table_meta.__call }
 end
 
+local function prep_for_send(tab)
+   local ret = {}
+   for k,v in pairs(tab) do
+      if type(v) == "table" then
+         if v.__is_server_type then
+            print("fix", v.__name)
+            -- Otherwise `storebin` may use `__pairs` and stuff,
+            --  and then end up sending stuff that way.
+            ret[k] = {__is_server_type = v.__is_server_type,
+                      __id = v.__id,
+                      __name = v.__name }
+         else
+            ret[k] = prep_for_send(tab)
+         end
+      else
+         ret[k] = v
+      end
+   end
+   return ret
+end
+
 function This:get(method, name, args, id)
    print(method, name, id, unpack(args or {}))
    assert(method)
@@ -45,7 +66,7 @@ function This:get(method, name, args, id)
 
    local url_list = {self.under_uri, method, name, id or "0"}
 
-   local encoded_data_sent = self.store.encode(args)
+   local encoded_data_sent = self.store.encode(args and prep_for_send(args) or nil)
 
    local got = {}
    local req_args = {
