@@ -25,7 +25,6 @@ function This:new_id(to)
    return tostring(self.prev_id)
 end
 
-
 function This:pegasus_respond(req, rep)
    local path = req:path() or ""
    if string.sub(path, 2, #self.under_path + 1) == self.under_path then
@@ -43,10 +42,13 @@ function This:pegasus_respond(req, rep)
 end
 
 function This:respond(method, name, id, input_data)
+   assert(type(method) == "string" and type(name) =="string" and
+             type(id) == "string" and type(input_data) == "string")
    local ret = nil
 
    -- If some object floating in here.
-   local in_vals = input_data and #input_data > 0 and self.store.decode(input_data)
+   local in_vals = #input_data > 0 and self.store.decode(input_data)
+   print(method, name, id, #input_data, in_vals and #in_vals)
    if id == "global" then  -- A global. (recommended only a handful, or only `require`)
       assert(not in_vals)
       assert(({index=true, newindex=self.allow_set_global})[method])
@@ -60,6 +62,8 @@ function This:respond(method, name, id, input_data)
       local key, value = unpack(in_vals)
       self.ongoing[id][key] = value
       ret = value
+   elseif method == "pairs" then
+      ret = pairs(self.ongoing[id])
    elseif method == "gc" then  -- Garbage collection.(hopefully)
       ret = function() self.ongoing[id] = nil end
    end
