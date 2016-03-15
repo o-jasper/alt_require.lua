@@ -6,13 +6,18 @@ Use `load` alone! Basically want to distinctions between `lua` and `luajit`.
 
 Basically, it could be a mandatory access control tool, a tool to analyse.
 
-But *also*, in principle, it might be possible to take some arbitrary lua file
-and say "you run on this other computer, using http(s) to talk".
-(or Tox, or whatever) Indicating just how MAC it could be. If they use
-`io.open` or `os.`, different files may see a different
-operating system, unless you pass that along aswel.
+# Magic across-server lua
 
-There is some code here, but not tested yet.
+Uses the above and storebin, Pegasus, lua-socket to keep track of
+objects on the other side.
+
+Could be useful for:
+
+* Dealing with when something works on `lua` but not `luajit` or vice versa.
+
+* Mandatory Access Control, if it is desired to isolate portions of code.
+
+* Magic moving code between client and server. However, clouds are bad.
 
 ### Dependencies
 The non-client server stuff just uses plain lua.(no dependencies)
@@ -27,7 +32,13 @@ Storebin can be replaced with an object  with `.encode(tree)` &rarr; `data`
 the same one.
 
 The pegasus-based thing can probably also be plugged into another server by
-calling `:respond` appropriately.
+calling `:respond` appropriately. Perhaps in the future i'll have an option
+to cut pegasus out of the loop.
 
 ## License
 I wanted a permissive license, it is under the MIT license accompanied.
+
+## TODO
+* Better testing. What do metatables on the server do?
+
+* Apply it to something..
