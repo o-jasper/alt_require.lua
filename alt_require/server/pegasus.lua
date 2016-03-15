@@ -87,10 +87,8 @@ function This:respond(method, name, id, input_data)
    end
 
    local pass = {}
-   if type(ret) == "function" then
-      pass = { is_fun=true,   id=self:new_id(ret) }
-   elseif type(ret) == "table" then
-      pass = { is_table=true, id=self:new_id(ret) }
+   if ({["function"]=true, ["table"]=true})[type(ret)] then
+      pass = { tp=type(ret), id=self:new_id(ret) }
    else  -- Just return it.
       pass = { val = ret }
    end

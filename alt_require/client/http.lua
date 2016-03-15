@@ -94,7 +94,7 @@ function This:get(method, name, args, id)
 
    local data = self.store.decode(table.concat(got))  -- TODO not other shit in there?
    local id, ret = data.id, nil
-   if data.is_fun then  -- It is a function, that contains the id to track it.
+   if data.tp == "function" then  -- It is a function, that contains the id to track it.
       assert(not data.val)
       if self.funs_as_funs then  -- Note then you cannot send the function back.
          ret = function(...) return self:get("call", name, {...}, id) end
@@ -102,13 +102,13 @@ function This:get(method, name, args, id)
          ret = setmetatable({ __is_server_type="function", __id=id, __name=name},
             self.fun_meta)
       end
-   elseif data.is_table then  -- Is a table.
+   elseif data.tp == "table" then  -- Is a table.
       assert(not data.val)
       ret = setmetatable({ __is_server_type="table", __id=id, __name=name },
          self.table_meta)
-   elseif data.is_error then -- Shouldnt be touching this.
+   elseif data.tp == "error" then -- Shouldnt be touching this.
       error(string.format("Server doesn't allow touching %q", req_args.url))
-   elseif data.is_local_get then  -- Mission creep.
+   elseif data.tp == "local_get" then  -- Mission creep.
       assert(self.local_get)
       ret = self:local_get(name, args, id, method)
    else
