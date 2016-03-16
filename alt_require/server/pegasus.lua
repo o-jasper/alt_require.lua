@@ -44,22 +44,25 @@ end
 This.check_for_fun = true
 
 local function turn_tables(ongoing, tab)
+   local ret = {}
    for k,v in pairs(tab) do
       if type(v) == "table" then
          if v.__is_server_type then  -- Get the function/table.
-            tab[k] = ongoing[v.__id]
+            ret[k] = ongoing[v.__id]
          else
-            tab[k] = turn_tables(ongoing, v)
+            ret[k] = turn_tables(ongoing, v)
          end
+      else
+         ret[k] = v
       end
    end
-   return tab
+   return ret
 end
 
 function This:respond(method, name, id, input_data)
    assert(type(method) == "string" and type(name) =="string" and
              type(id) == "string" and type(input_data) == "string")
-   local ret = nil
+   local ret = {}
 
    -- If some object floating in here.
    local in_vals = #input_data > 0 and self.store.decode(input_data)
@@ -68,31 +71,32 @@ function This:respond(method, name, id, input_data)
       assert(not in_vals)
       assert(({index=true, newindex=self.allow_set_global})[method])
       assert(method == "index")
-      ret = self.globals[name]
+      ret = {self.globals[name]}
    elseif method == "call" then
-      assert(in_vals)
-      if self.check_for_fun then in_vals = turn_tables(self.ongoing, in_vals) end
-      ret = self.ongoing[id](unpack(in_vals))
+      assert(type(in_vals) == "table")
+      ret = {self.ongoing[id](unpack(in_vals))}
    elseif method == "index" then
       assert(not in_vals)
-      ret = self.ongoing[id][name]
+      ret = {self.ongoing[id][name]}
    elseif method == "newindex" then
       local key, value = unpack(in_vals)
       self.ongoing[id][key] = value
-      ret = value
+      ret = {value}
    elseif method == "pairs" then
-      ret = pairs(self.ongoing[id])
+      -- TODO the problem is, it is multi-value.
+      ret = {pairs(self.ongoing[id])}
    elseif method == "gc" then  -- Garbage collection.(hopefully)
-      ret = function() self.ongoing[id] = nil end
+      ret = {function() self.ongoing[id] = nil end}
    end
 
    local pass = {}
-   if ({["function"]=true, ["table"]=true})[type(ret)] then
-      pass = { tp=type(ret), id=self:new_id(ret) }
-   else  -- Just return it.
-      pass = { val = ret }
+   for _, r in ipairs(ret) do
+      if ({["function"]=true, ["table"]=true})[type(r)] then
+         table.insert(pass, { tp=type(r), id=self:new_id(r) })
+      else  -- Just return it.
+         table.insert(pass, { val = r })
+      end
    end
-
    return self.store.encode(pass)
 end
 

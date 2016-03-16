@@ -4,6 +4,12 @@
 
 local tab = require "alt_require.test.toys.ret_tab"
 
+-- Zero arguments is okey.
+print(tab.no_args())
+
+-- Testing if `pairs` can work.
+for k,v in pairs(tab) do print(k,v) end
+
 -- Calling from tables, accessing tables, calling functions.
 print(tab.c.d(tab.a(tab.b("1,2"), "3")))
 
@@ -11,4 +17,4 @@ print(tab.c.d(tab.a(tab.b("1,2"), "3")))
 print(tab.ff(tab.c.d, "75"))
 
 -- Passing received tables back.
- print(tab.gg(tab.c, "@@"))  -- Bit of a mystery.
+print(tab.gg(tab.c, "@@"))  -- Bit of a mystery.

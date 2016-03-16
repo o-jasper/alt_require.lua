@@ -25,6 +25,7 @@ function This:init()
    self.table_meta = {}
    for _, method in ipairs{"newindex", "call", "pairs"} do
       self.table_meta["__" .. method] = function(this, ...)
+         print("**", method, this.__name, #{...})
          return self:get(method, this.__name, {...}, this.__id)
       end
    end
@@ -66,6 +67,7 @@ function This:get(method, name, args, id)
 
    local url_list = {self.under_uri, method, name, id or "0"}
 
+   -- TODO abstract this portion so you can switch it for something else than http.
    local encoded_data_sent = self.store.encode(args and prep_for_send(args) or nil)
 
    local got = {}
@@ -92,36 +94,40 @@ function This:get(method, name, args, id)
    -- TODO try again.
    assert(code == 200, string.format("I am really bad with hickups! %q (%s)", code, c))
 
-   local data = self.store.decode(table.concat(got))  -- TODO not other shit in there?
-   local id, ret = data.id, nil
-   if data.tp == "function" then  -- It is a function, that contains the id to track it.
-      assert(not data.val)
-      if self.funs_as_funs then  -- Note then you cannot send the function back.
-         ret = function(...) return self:get("call", name, {...}, id) end
+   local ret_list = {}  -- List of values.
+   local data_list = self.store.decode(table.concat(got)) or {}
+    -- TODO not other shit in there?
+   for _, data in ipairs(data_list) do
+      local id, ret = data.id, nil
+      if data.tp == "function" then  -- It is a function, that contains the id to track it.
+         assert(not data.val)
+         if self.funs_as_funs then  -- Note then you cannot send the function back.
+            ret = function(...) return self:get("call", name, {...}, id) end
+         else
+            ret = setmetatable({ __is_server_type="function", __id=id, __name=name},
+               self.fun_meta)
+         end
+      elseif data.tp == "table" then  -- Is a table.
+         assert(not data.val)
+         ret = setmetatable({ __is_server_type="table", __id=id, __name=name },
+            self.table_meta)
+      elseif data.tp == "error" then -- Shouldnt be touching this.
+         error(string.format("Server doesn't allow touching %q", req_args.url))
+      elseif data.tp == "local_get" then  -- Mission creep.
+         assert(self.local_get)
+         ret = self:local_get(name, args, id, method)
       else
-         ret = setmetatable({ __is_server_type="function", __id=id, __name=name},
-            self.fun_meta)
+         -- Can still be a tree-shaped table, but in that case it is not
+         -- synchronized across.
+         ret = data.val
       end
-   elseif data.tp == "table" then  -- Is a table.
-      assert(not data.val)
-      ret = setmetatable({ __is_server_type="table", __id=id, __name=name },
-         self.table_meta)
-   elseif data.tp == "error" then -- Shouldnt be touching this.
-      error(string.format("Server doesn't allow touching %q", req_args.url))
-   elseif data.tp == "local_get" then  -- Mission creep.
-      assert(self.local_get)
-      ret = self:local_get(name, args, id, method)
-   else
-      -- Can still be a tree-shaped table, but in that case it is not
-      -- synchronized across.
-      ret = data.val
+      table.insert(ret_list, ret)
    end
-
   -- Note logic that require that type could have issues..
    -- can be fir
    assert(type(ret) ~= "function")
 
-   return ret
+   return unpack(ret_list)
 end
 
 This.require = require
