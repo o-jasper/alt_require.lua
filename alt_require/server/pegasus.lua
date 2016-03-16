@@ -41,8 +41,6 @@ function This:pegasus_respond(req, rep)
    end
 end
 
-This.check_for_fun = true
-
 local function turn_tables(ongoing, tab)
    local ret = {}
    for k,v in pairs(tab) do
@@ -74,7 +72,7 @@ function This:respond(method, name, id, input_data)
       ret = {self.globals[name]}
    elseif method == "call" then
       assert(type(in_vals) == "table")
-      ret = {self.ongoing[id](unpack(in_vals))}
+      ret = {self.ongoing[id](unpack(turn_tables(self.ongoing, in_vals)))}
    elseif method == "index" then
       assert(not in_vals)
       ret = {self.ongoing[id][name]}
