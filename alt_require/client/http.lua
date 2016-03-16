@@ -41,7 +41,6 @@ local function prep_for_send(tab)
    for k,v in pairs(tab) do
       if type(v) == "table" then
          if v.__is_server_type then
-            print("fix", v.__name)
             -- Otherwise `storebin` may use `__pairs` and stuff,
             --  and then end up sending stuff that way.
             ret[k] = {__is_server_type = v.__is_server_type,
@@ -58,7 +57,7 @@ local function prep_for_send(tab)
 end
 
 function This:get(method, name, args, id)
-   print(method, name, id, unpack(args or {}))
+--   print(method, name, id, unpack(args or {}))
    assert(method)
 
    local const = self.constants[name]

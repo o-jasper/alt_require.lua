@@ -28,6 +28,11 @@ Could be useful for:
 
 * Unknowns..
 
+* It seems a little slow, though i see little reason why it should be.
+  (note: perhaps use other data-transmission stuff)
+
+Note: to run these tests, have `lua alt_require/test/server.lua` running.
+
 ### Dependencies
 The non-client server stuff just uses plain lua.(no dependencies)
 
@@ -48,11 +53,7 @@ to cut pegasus out of the loop.
 I wanted a permissive license, it is under the MIT license accompanied.
 
 ## TODO
-* Better testing. What do metatables on the server do?
-
-* Apply it to something..
+* Better testing. What do metatables on the server do? Does the
+  select-where-to-run portion work nicely?
 
 * Can javascript talk to it?
-
-* `name` passed each time is pretty much useless, it is basically always
-  `"require"`.

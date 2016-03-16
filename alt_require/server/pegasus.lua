@@ -36,7 +36,7 @@ function This:pegasus_respond(req, rep)
          local str = self:respond(method, name, id, input_data)
          -- TODO header depends on `self.store`.
          rep:addHeader("Content-Type", "bin/storebin"):write(str)
-         return true
+         return method, name, id
       end
    end
 end
@@ -64,7 +64,7 @@ function This:respond(method, name, id, input_data)
 
    -- If some object floating in here.
    local in_vals = #input_data > 0 and self.store.decode(input_data)
-   print(method, name, id, #input_data, in_vals and #in_vals, in_vals)
+--   print(method, name, id, #input_data, in_vals and #in_vals, in_vals)
    if id == "global" then  -- A global. (recommended only a handful, or only `require`)
       assert(not in_vals)
       assert(({index=true, newindex=self.allow_set_global})[method])
