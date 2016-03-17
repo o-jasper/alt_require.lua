@@ -102,3 +102,6 @@ I wanted a permissive license, it is under the MIT license accompanied.
 * Implement a `store` version that ports `json`.
   (`json` can't do full lua tables..)
   + Can javascript talk to it?
+
+* Map projects with recorders, producing graphs with
+  [graphviz](http://graphviz.org/).([wp](https://en.wikipedia.org/wiki/Graphviz))
