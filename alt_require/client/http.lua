@@ -36,24 +36,15 @@ function This:init()
    self.got_tables = {}
    if self.memoize_constant then
       self.table_meta.__index = function(this, key)
-         -- Don't hacve it yet in any case.
+         -- Don't have it yet in any case.
          local got = self:get("index", key, nil, this.__id)
          -- See if constant.
          local c = rawget(this, "__constant")
-         if c == false then
-            return got
-         elseif c == nil then
-            c = self:get("is_constant", key, nil, this.__id)
-            -- Memoize whether constant. `nil` means `false` now.
-            rawset(this, "__constant", c or false)
-            if not c then  -- Not constant.
-               return got
-            end
-         end
-         -- Respectively all constant, just particular keys/types(c[1]), or one type.
-         if (   (c == true)
-             or (type(c) == "table" and (c[key] or (c[1] and c[1][type(got)])))
-             or c == type(got) ) then
+         if -- Respectively all constant, just particular keys/types(c[1]), or one type.
+            (c == true)
+            or (type(c) == "table" and (c[key] or (c[1] and c[1][type(got)])))
+            or (c == type(got) and type(c) == "string")
+         then
             rawset(this, key, got)
          end
          return got
@@ -126,7 +117,7 @@ function This:get(method, name, args, id)
 
    local ret_list = {}  -- List of values.
    local data_list = self.store.decode(table.concat(got)) or {}
-    -- TODO not other shit in there?
+   -- TODO not other shit in there?
    for _, data in ipairs(data_list) do
       local id, ret = data.id, nil
       if data.tp == "function" then  -- It is a function, that contains the id to track it.
@@ -141,11 +132,9 @@ function This:get(method, name, args, id)
          assert(not data.val)
          ret = self.got_tables[id]
          if not ret then
-            ret = setmetatable({ __is_server_type="table", __id=id, __name=name },
+            ret = setmetatable({ __is_server_type="table", __id=id, __name=name,
+                               __constant = data.const},
                self.table_meta)
-            if ret.__constant then
-               self.got_tables[id] = ret
-            end
          end
       elseif data.tp == "error" then -- Shouldnt be touching this.
          error(string.format("Server doesn't allow touching %q", req_args.url))

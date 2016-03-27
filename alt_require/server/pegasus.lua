@@ -62,6 +62,8 @@ local function astring(inp, fmt)
    for name, str in pairs(inp) do assert(str, string.format(fmt, name, str)) end
 end
 
+This.memoize_constant = true  -- TODO sync this over?
+
 function This:respond(method, name, id, input_data)
    astring{method = "method", name=name, id=id, input_data=input_data}
 
@@ -81,24 +83,6 @@ function This:respond(method, name, id, input_data)
       if method == "call" then
          assert(type(in_vals) == "table")
          ret = {cur(unpack(turn_tables(self.ongoing, in_vals)))}
-      elseif method == "is_constant" then
-         -- Separate otherwise classes where `__index` is self cannot make
-         -- themselves constant without making all instances constant.
-         local c = rawget(cur, "__constant")
-         if c == nil and cur.__constant then  -- Some metatable stuff is constant.
-            if not cur.__which_constant then
-               local index = getmetatable(cur).__index
-               local wc, wnc = {}, index.__which_not_constant or {}
-               index.__which_constant     = wc
-               index.__which_not_constant = wnc  -- Indicate changables here.
-               for k in pairs(index) do
-                  wc[k] = not wnc[k] or nil
-               end
-            end
-            ret = {cur.__which_constant}
-         else
-            ret = {c}
-         end
       elseif method == "index" then
          assert(not in_vals)
          ret = {cur[name]}
@@ -113,8 +97,28 @@ function This:respond(method, name, id, input_data)
 
    local pass = {}
    for _, r in ipairs(ret) do
-      if ({["function"]=true, ["table"]=true})[type(r)] then
-         table.insert(pass, { tp=type(r), id=self:new_id(r) })
+      local tp = type(r)
+      if tp == "function" then
+         table.insert(pass, { tp=tp, id=self:new_id(r) })
+      elseif tp == "table" then
+         local c
+         if self.memoize_constant then
+            c = rawget(r, "__constant")
+            -- Dynamically figures what is part of class.
+            if c == nil and r.__constant then
+               if not r.__which_constant then
+                  local index = getmetatable(r).__index
+                  local wc, wnc = {}, index.__which_not_constant or {}
+                  index.__which_constant     = wc
+                  index.__which_not_constant = wnc  -- Indicate changables here.
+                  for k in pairs(index) do
+                     wc[k] = not wnc[k] or nil
+                  end
+               end
+               c = r.__which_constant
+            end
+         end
+         table.insert(pass, { tp=tp, id=self:new_id(r), const=c })
       else  -- Just return it.
          table.insert(pass, { val = r })
       end
