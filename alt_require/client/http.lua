@@ -4,7 +4,7 @@
 local http  = require "socket.http"
 local ltn12 = require "ltn12"
 
-local This = {}
+local This = { __constant = true }
 This.__index = This
 
 This.store = require "storebin"
@@ -17,6 +17,8 @@ end
 
 This.under_path = ""
 
+This.memoize_constant = true
+
 function This:init()
    self.constants = {}
    assert(self.under_site, "Need to specify what server to connect to.")
@@ -28,8 +30,32 @@ function This:init()
          return self:get(method, this.__name, {...}, this.__id)
       end
    end
-   self.table_meta.__index = function(this, key)
-      return self:get("index", key, nil, this.__id)
+   self.got_tables = {}
+   if self.memoize_constant then
+      self.table_meta.__index = function(this, key)
+         -- See if constant.
+         local cnst = rawget(this, "__constant")
+         if cnst == false then
+            return self:get("index", key, nil, this.__id)
+         elseif cnst == nil then
+            cnst = self:get("index", "__constant", nil, this.__id)
+            -- Memoize whether constant. `nil` means `false` now.
+            rawset(this, "__constant", cnst or false)
+            if not cnst then  -- Not constant.
+               return self:get("index", key, nil, this.__id)
+            end
+         end
+         -- It is constant.
+         -- We can assume it was not meoized already, otherwise this function
+         -- would not be called.
+         local got = self:get("index", key, nil, this.__id)
+         rawset(this, key, got)
+         return got
+      end
+   else
+      self.table_meta.__index = function(this, key)
+         return self:get("index", key, nil, this.__id)
+      end
    end
 
    -- TODO rest off limits..
@@ -107,8 +133,14 @@ function This:get(method, name, args, id)
          end
       elseif data.tp == "table" then  -- Is a table.
          assert(not data.val)
-         ret = setmetatable({ __is_server_type="table", __id=id, __name=name },
-            self.table_meta)
+         ret = self.got_tables[id]
+         if not ret then
+            ret = setmetatable({ __is_server_type="table", __id=id, __name=name },
+               self.table_meta)
+            if ret.__constant then
+               self.got_tables[id] = ret
+            end
+         end
       elseif data.tp == "error" then -- Shouldnt be touching this.
          error(string.format("Server doesn't allow touching %q", req_args.url))
       elseif data.tp == "local_get" then  -- Mission creep.
