@@ -1,4 +1,4 @@
-local This = {}
+local This = { __constant=true }
 This.__index = This
 
 This.store = require "storebin"
@@ -74,20 +74,41 @@ function This:respond(method, name, id, input_data)
       assert(({index=true, newindex=self.allow_set_global})[method])
       assert(method == "index")
       ret = {self.globals[name]}
-   elseif method == "call" then
-      assert(type(in_vals) == "table")
-      ret = {self.ongoing[id](unpack(turn_tables(self.ongoing, in_vals)))}
-   elseif method == "index" then
-      assert(not in_vals)
-      ret = {self.ongoing[id][name]}
-   elseif method == "newindex" then
-      local key, value = unpack(in_vals)
-      self.ongoing[id][key] = value
-      ret = {value}
-   elseif method == "pairs" then
-      ret = {pairs(self.ongoing[id])}
    elseif method == "gc" then  -- Garbage collection.(hopefully)
       ret = {function() self.ongoing[id] = nil end}
+   else
+      local cur = self.ongoing[id]
+      if method == "call" then
+         assert(type(in_vals) == "table")
+         ret = {cur(unpack(turn_tables(self.ongoing, in_vals)))}
+      elseif method == "is_constant" then
+         -- Separate otherwise classes where `__index` is self cannot make
+         -- themselves constant without making all instances constant.
+         local c = rawget(cur, "__constant")
+         if c == nil and cur.__constant then  -- Some metatable stuff is constant.
+            if not cur.__which_constant then
+               local index = getmetatable(cur).__index
+               local wc, wnc = {}, index.__which_not_constant or {}
+               index.__which_constant     = wc
+               index.__which_not_constant = wnc  -- Indicate changables here.
+               for k in pairs(index) do
+                  wc[k] = not wnc[k] or nil
+               end
+            end
+            ret = {cur.__which_constant}
+         else
+            ret = {c}
+         end
+      elseif method == "index" then
+         assert(not in_vals)
+         ret = {cur[name]}
+      elseif method == "newindex" then
+         local key, value = unpack(in_vals)
+         cur[key] = value
+         ret = {value}
+      elseif method == "pairs" then
+         ret = {pairs(cur)}
+      end
    end
 
    local pass = {}

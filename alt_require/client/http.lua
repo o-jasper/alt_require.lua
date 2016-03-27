@@ -4,7 +4,10 @@
 local http  = require "socket.http"
 local ltn12 = require "ltn12"
 
-local This = { __constant = true }
+local This = {
+   __constant=true,
+   __which_not_constant = { under_path=true, memoize_constant=true, require=true, },
+}
 This.__index = This
 
 This.store = require "storebin"
@@ -33,23 +36,26 @@ function This:init()
    self.got_tables = {}
    if self.memoize_constant then
       self.table_meta.__index = function(this, key)
+         -- Don't hacve it yet in any case.
+         local got = self:get("index", key, nil, this.__id)
          -- See if constant.
-         local cnst = rawget(this, "__constant")
-         if cnst == false then
-            return self:get("index", key, nil, this.__id)
-         elseif cnst == nil then
-            cnst = self:get("index", "__constant", nil, this.__id)
+         local c = rawget(this, "__constant")
+         if c == false then
+            return got
+         elseif c == nil then
+            c = self:get("is_constant", key, nil, this.__id)
             -- Memoize whether constant. `nil` means `false` now.
-            rawset(this, "__constant", cnst or false)
-            if not cnst then  -- Not constant.
-               return self:get("index", key, nil, this.__id)
+            rawset(this, "__constant", c or false)
+            if not c then  -- Not constant.
+               return got
             end
          end
-         -- It is constant.
-         -- We can assume it was not meoized already, otherwise this function
-         -- would not be called.
-         local got = self:get("index", key, nil, this.__id)
-         rawset(this, key, got)
+         -- Respectively all constant, just particular keys/types(c[1]), or one type.
+         if (   (c == true)
+             or (type(c) == "table" and (c[key] or (c[1] and c[1][type(got)])))
+             or c == type(got) ) then
+            rawset(this, key, got)
+         end
          return got
       end
    else
