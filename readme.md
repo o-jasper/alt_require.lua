@@ -112,13 +112,21 @@ I wanted a permissive license, it is under the MIT license accompanied.
   + Can javascript talk to it?
   + "pre-prepared `store`", basically with some definitions already transferred.
 
+* Could build-in the (non-argument)format, instead of using `storebin`. i.e.
+  `is_server_type` 1byte, `id` 6 bytes, `name`(variable length),
+  number-of-arguments, `storebin`-ed each argument.
+
+  *However* depends on other things, *and* should do it using specialized
+  `self.store.encode`.(/`..decode`)
+
 * Map projects with recorders, producing graphs with
   [graphviz](http://graphviz.org/).([wp](https://en.wikipedia.org/wiki/Graphviz))
 
-* Many limitations(I think the full thing can work with bidirectional communication.
+* Many limitations can be removed with bidirectional communication.
 
   Both ends could have simulacra, and instead of the value, the server could
-  sometimes return requests for more information about a server-side simulacrum.
+  sometimes return requests with not values, but instead ask more information
+  about a server-side simulacrum.
 
   This can be done with the plain http and pegasus-approach.
   (however, it might make things more-complicated enough to keep the two separate)
