@@ -17,4 +17,6 @@ print(tab.c.d(tab.a(tab.b("1,2"), "3")))
 print(tab.ff(tab.c.d, "75"))
 
 -- Passing received tables back.
-print(tab.gg(tab.c, "@@"))  -- Bit of a mystery.
+print(tab.gg(tab.c, "@@"))
+
+-- 

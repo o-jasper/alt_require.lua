@@ -57,11 +57,15 @@ local function turn_tables(ongoing, tab)
    return ret
 end
 
-function This:respond(method, name, id, input_data)
-   assert(type(method) == "string" and type(name) =="string" and
-             type(id) == "string" and type(input_data) == "string")
-   local ret = {}
+local function astring(inp, fmt)
+   local fmt = fmt or "%s not a string; %s"
+   for name, str in pairs(inp) do assert(str, string.format(fmt, name, str)) end
+end
 
+function This:respond(method, name, id, input_data)
+   astring{method = "method", name=name, id=id, input_data=input_data}
+
+   local ret = {}
    -- If some object floating in here.
    local in_vals = #input_data > 0 and self.store.decode(input_data)
 --   print(method, name, id, #input_data, in_vals and #in_vals, in_vals)
@@ -81,7 +85,6 @@ function This:respond(method, name, id, input_data)
       self.ongoing[id][key] = value
       ret = {value}
    elseif method == "pairs" then
-      -- TODO the problem is, it is multi-value.
       ret = {pairs(self.ongoing[id])}
    elseif method == "gc" then  -- Garbage collection.(hopefully)
       ret = {function() self.ongoing[id] = nil end}

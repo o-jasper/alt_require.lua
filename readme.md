@@ -46,21 +46,29 @@ Could be useful for:
 
 * Magic moving code between client and server. However, clouds are bad.
 
-(Current)Limitations:
+#### (Current)Limitations:
 
-* Unless the function came from the server -as-is-, the client cannot send
-  functions to the server.
+1. Unless the function came from the server -as-is-, the client cannot send
+   functions to the server.
 
-* Tables that are sent are copied each time.
+2. Tables client-to-server are copied each time.
 
-  Should be possible to clear out these tables and add a metatable as to
-  en-server-side them. (Unclear *when* to do this)
+   Should be possible to clear out these tables and add a metatable as to
+   en-server-side them. (Unclear *when* to do this)
 
-* Unknowns..
+3. `getmetatable` of a simulacrum, returns the thing simulating the object,
+   so `getmetatable`t itself won't be simulated.
 
-* It seems a little slow, though i see little reason why it should be.
-  (note: perhaps use other data-transmission stuff, note2: storebin might
-  be slow, but not nearly slow enough to explain the low speed)
+   Some implementations of classes, `obj.__index` might effectively do it.
+
+   Client-to-server are not sent with metatables currently. Barring (1)
+   it could.
+
+4. Unknowns..
+
+5. It seems a little slow, though i see little reason why it should be.
+   (note: perhaps use other data-transmission stuff, note2: storebin might
+   be slow, but not nearly slow enough to explain the low speed)
 
 Note: to run these tests, have `lua alt_require/test/server.lua` running.
 
@@ -102,6 +110,19 @@ I wanted a permissive license, it is under the MIT license accompanied.
 * Implement a `store` version that ports `json`.
   (`json` can't do full lua tables..)
   + Can javascript talk to it?
+  + "pre-prepared `store`", basically with some definitions already transferred.
 
 * Map projects with recorders, producing graphs with
   [graphviz](http://graphviz.org/).([wp](https://en.wikipedia.org/wiki/Graphviz))
+
+* Many limitations(I think the full thing can work with bidirectional communication.
+
+  Both ends could have simulacra, and instead of the value, the server could
+  sometimes return requests for more information about a server-side simulacrum.
+
+  This can be done with the plain http and pegasus-approach.
+  (however, it might make things more-complicated enough to keep the two separate)
+
+* Multithreading sounds hard.. Could have a standard indicating some info about
+  how things are used, for instance if a table is constant, if a function does
+  not change state of anything.(or even what it changes)

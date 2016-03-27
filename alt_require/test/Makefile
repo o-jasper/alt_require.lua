@@ -1,3 +1,8 @@
+default:
+	echo "Options:" > /dev/null
+	grep ':' Makefile
+	make run_server
+
 # Needed to run any server tests.
 run_server:
 	lua server.lua
