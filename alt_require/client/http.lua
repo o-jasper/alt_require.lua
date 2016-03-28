@@ -40,11 +40,7 @@ function This:init()
          local got = self:get("index", key, nil, this.__id)
          -- See if constant.
          local c = rawget(this, "__constant")
-         if -- Respectively all constant, just particular keys/types(c[1]), or one type.
-            (c == true)
-            or (type(c) == "table" and (c[key] or (c[1] and c[1][type(got)])))
-            or (c == type(got) and type(c) == "string")
-         then
+         if (c == true) or c:inside(key, got) then
             rawset(this, key, got)
          end
          return got
@@ -78,6 +74,8 @@ local function prep_for_send(tab)
    end
    return ret
 end
+
+local KeyIn = require "alt_require.KeyIn"
 
 function This:get(method, name, args, id)
 --   print(method, name, id, unpack(args or {}))
@@ -133,7 +131,7 @@ function This:get(method, name, args, id)
          ret = self.got_tables[id]
          if not ret then
             ret = setmetatable({ __is_server_type="table", __id=id, __name=name,
-                               __constant = data.const},
+                                 __constant = KeyIn:new(data.const)},
                self.table_meta)
          end
       elseif data.tp == "error" then -- Shouldnt be touching this.

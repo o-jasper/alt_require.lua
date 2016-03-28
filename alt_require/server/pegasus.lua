@@ -105,18 +105,7 @@ function This:respond(method, name, id, input_data)
          if self.memoize_constant then
             c = rawget(r, "__constant")
             -- Dynamically figures what is part of class.
-            if c == nil and r.__constant then
-               if not r.__which_constant then
-                  local index = getmetatable(r).__index
-                  local wc, wnc = {}, index.__which_not_constant or {}
-                  index.__which_constant     = wc
-                  index.__which_not_constant = wnc  -- Indicate changables here.
-                  for k in pairs(index) do
-                     wc[k] = not wnc[k] or nil
-                  end
-               end
-               c = r.__which_constant
-            end
+            c  (c == nil and r.__constant) or nil
          end
          table.insert(pass, { tp=tp, id=self:new_id(r), const=c })
       else  -- Just return it.
