@@ -31,14 +31,12 @@ client:
 complex:
 	lua bin/top_in_client.lua "alt_require.test.toys.complex"
 
-### (server) below do not yet work.
-
+# Tests from other projects.
 sha2_all: sha2 sha2_more
 
-# Doesn't crash, but likely _not_ working and just spinning its wheels.
 sha2:
 	lua bin/top_in_client.lua "merkle.test.sha2"
-
-#(idem)
 sha2_more:
 	lua bin/top_in_client.lua "merkle.test.sha2_more"
+
+# TODO more.
