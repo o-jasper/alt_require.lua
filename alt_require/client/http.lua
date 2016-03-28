@@ -130,8 +130,10 @@ function This:get(method, name, args, id)
          assert(not data.val)
          ret = self.got_tables[id]
          if not ret then
+            local const = data.const
+            local const = (type(const) == "table" and KeyIn:new(const)) or const
             ret = setmetatable({ __is_server_type="table", __id=id, __name=name,
-                                 __constant = KeyIn:new(data.const)},
+                                 __constant = const },
                self.table_meta)
          end
       elseif data.tp == "error" then -- Shouldnt be touching this.

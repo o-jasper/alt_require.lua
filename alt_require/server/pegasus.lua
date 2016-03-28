@@ -105,7 +105,7 @@ function This:respond(method, name, id, input_data)
          if self.memoize_constant then
             c = rawget(r, "__constant")
             -- Dynamically figures what is part of class.
-            c  (c == nil and r.__constant) or nil
+            c = (c == nil and r.__constant) or c
          end
          table.insert(pass, { tp=tp, id=self:new_id(r), const=c })
       else  -- Just return it.
