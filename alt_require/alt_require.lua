@@ -13,6 +13,7 @@ local function alt_findfile(str)
          return cur_file
       end
    end
+   error(string.format("Aint got no file? %s", str))
 end
 
 local function alt_require_plain(env)
