@@ -23,7 +23,6 @@ This.under_path = ""
 This.memoize_constant = true
 
 function This:init()
-   self.constants = {}
    assert(self.under_site, "Need to specify what server to connect to.")
    self.under_uri = self.under_uri or self.under_site .. "/" .. self.under_path
 
@@ -75,26 +74,14 @@ local function prep_for_send(tab)
    return ret
 end
 
-local KeyIn = require "alt_require.KeyIn"
-
-function This:get(method, name, args, id)
---   print(method, name, id, unpack(args or {}))
-   assert(type(method) == "string")
-   local name = tostring(name)
-
-   local const = self.constants[name]
-   if const then return const end
-
-   local url_list = {self.under_uri, method, name, id or "0"}
-
-   -- TODO abstract this portion so you can switch it for something else than http.
+function This:send_n_receive(url, args)
    local data = type(args)=="table" and prep_for_send(args) or
       ((method ~= "index" or name ~= args) and args) or nil
-   local encoded_data_sent = self.store.encode(data)
+   local encoded_data_sent = self.store.encode(data)  -- Need the bloody length.
 
    local got = {}
    local req_args = {
-      url     = table.concat(url_list, "/"),
+      url     = url,
       sink    = ltn12.sink.table(got),
       method  = "PUT",
       -- TODO header depends on `self.store`.
@@ -114,9 +101,19 @@ function This:get(method, name, args, id)
    local c, code, headers = http.request(req_args)
    -- TODO try again.
    assert(code == 200, string.format("I am really bad with hickups! %q (%s)", code, c))
+   return self.store.decode(table.concat(got)) or {}
+end
 
-   local ret_list = {}  -- List of values.
-   local data_list = self.store.decode(table.concat(got)) or {}
+local KeyIn = require "alt_require.KeyIn"
+
+function This:get(method, name, args, id)
+--   print(method, name, id, unpack(args or {}))
+   assert(type(method) == "string")
+   local name = tostring(name)
+
+   local url = table.concat({self.under_uri, method, name, id or "0"}, "/")
+   local data_list, ret_list = self:send_n_receive(url, args), {}
+
    -- TODO not other shit in there?
    for _, data in ipairs(data_list) do
       local id, ret = data.id, nil
