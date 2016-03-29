@@ -9,7 +9,7 @@ local sender = require("alt_require.client.http"):new{
 local function req(str)
    return alt_require({in_package=str}, {},
       sender:globals(nil, req),
-      require "alt_require.glob.simple"
+      require "alt_require.glob.all"
       --{ __envname="reqself", require = req }
    )(str)()
 end
