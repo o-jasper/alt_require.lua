@@ -40,7 +40,7 @@ function This:init()
          local got = self:get("index", key, nil, this.__id)
          -- See if constant.
          local c = rawget(this, "__constant")
-         if (c == true) or c:inside(key, got) then
+         if (c == true) or c and c:inside(key, got) then
             rawset(this, key, got)
          end
          return got
