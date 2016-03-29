@@ -13,22 +13,15 @@ run_server:
 ### Non-server tests.
 all_non_server: lua_non_server luajit_non_server
 
-lua_non_server: lua_simple
+%.lua: /tmp/
+	lua "$@"
 
-lua_simple:
-	lua simple.lua
-
-luajit_non_server: luajit_simple
-
-luajit_simple:
-	luajit simple.lua
+%.luajit:
+	lua "`echo -n $@ | head -c-3`"
 
 ### Server.
 
-all_client: complex client
-
-client:
-	lua client.lua
+all_client: client.lua client.luajit
 
 # Looks like this works
 complex: tic/alt_require.test.toys.complex
