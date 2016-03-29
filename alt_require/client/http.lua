@@ -28,7 +28,7 @@ function This:init()
    self.under_uri = self.under_uri or self.under_site .. "/" .. self.under_path
 
    self.table_meta = {}
-   for _, method in ipairs{"newindex", "call", "pairs"} do
+   for _, method in ipairs{"newindex", "call", "pairs", "len"} do
       self.table_meta["__" .. method] = function(this, ...)
          return self:get(method, this.__name, {...}, this.__id)
       end

@@ -92,6 +92,10 @@ function This:respond(method, name, id, input_data)
          ret = {value}
       elseif method == "pairs" then
          ret = {pairs(cur)}
+      elseif method == "len" then
+         ret = {#cur}
+      else
+         error(string.format("Dont recognize method; %s", method))
       end
    end
 
