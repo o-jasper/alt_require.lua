@@ -20,3 +20,6 @@ print(tab.ff(tab.c.d, "75"))
 print(tab.gg(tab.c, "@@"))
 
 -- 
+local x = require "alt_require.test.toys.ret_list"
+print(x[1], x[2], x[3], x[4])
+print(unpack(x))

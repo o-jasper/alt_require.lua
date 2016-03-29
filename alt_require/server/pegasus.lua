@@ -84,8 +84,7 @@ function This:respond(method, name, id, input_data)
          assert(type(in_vals) == "table")
          ret = {cur(unpack(turn_tables(self.ongoing, in_vals)))}
       elseif method == "index" then
-         assert(not in_vals)
-         ret = {cur[name]}
+         ret = {cur[in_vals or name]}
       elseif method == "newindex" then
          local key, value = unpack(in_vals)
          cur[key] = value

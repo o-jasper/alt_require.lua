@@ -37,7 +37,7 @@ function This:init()
    if self.memoize_constant then
       self.table_meta.__index = function(this, key)
          -- Don't have it yet in any case.
-         local got = self:get("index", key, nil, this.__id)
+         local got = self:get("index", key, key, this.__id)
          -- See if constant.
          local c = rawget(this, "__constant")
          if (c == true) or c and c:inside(key, got) then
@@ -47,7 +47,7 @@ function This:init()
       end
    else
       self.table_meta.__index = function(this, key)
-         return self:get("index", key, nil, this.__id)
+         return self:get("index", key, key, this.__id)
       end
    end
 
@@ -79,7 +79,8 @@ local KeyIn = require "alt_require.KeyIn"
 
 function This:get(method, name, args, id)
 --   print(method, name, id, unpack(args or {}))
-   assert(method)
+   assert(type(method) == "string")
+   local name = tostring(name)
 
    local const = self.constants[name]
    if const then return const end
@@ -87,7 +88,9 @@ function This:get(method, name, args, id)
    local url_list = {self.under_uri, method, name, id or "0"}
 
    -- TODO abstract this portion so you can switch it for something else than http.
-   local encoded_data_sent = self.store.encode(args and prep_for_send(args) or nil)
+   local data = type(args)=="table" and prep_for_send(args) or
+      ((method ~= "index" or name ~= args) and args) or nil
+   local encoded_data_sent = self.store.encode(data)
 
    local got = {}
    local req_args = {
@@ -101,7 +104,6 @@ function This:get(method, name, args, id)
       },
    }
    if args then
-      assert(type(args) == "table")
       req_args.source = function()
          local ret = encoded_data_sent
          encoded_data_sent = nil
