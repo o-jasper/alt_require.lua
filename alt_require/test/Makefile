@@ -11,7 +11,7 @@ run_server:
 	lua server.lua
 
 ### Non-server tests.
-all_non_server: lua_non_server luajit_non_server
+all_non_server: simple.lua simple.luajit
 
 %.lua: /tmp/
 	lua "$@"
