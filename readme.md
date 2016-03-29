@@ -53,6 +53,8 @@ Could be useful for:
 
 2. Tables client-to-server are copied each time.
 
+   Sending looping tables doesnt work.
+
    Should be possible to clear out these tables and add a metatable as to
    en-server-side them. (Unclear *when* to do this)
 
@@ -69,6 +71,9 @@ Could be useful for:
 5. It seems a little slow, though i see little reason why it should be.
    (note: perhaps use other data-transmission stuff, note2: storebin might
    be slow, but not nearly slow enough to explain the low speed)
+   
+   note3: it looks for `__constant` in tables now, tables that are constant
+   are memoized on the other side.
 
 Note: to run these tests, have `lua alt_require/test/server.lua` running.
 
@@ -129,7 +134,8 @@ I wanted a permissive license, it is under the MIT license accompanied.
   about a server-side simulacrum.
 
   This can be done with the plain http and pegasus-approach.
-  (however, it might make things more-complicated enough to keep the two separate)
+  (however, it might make things more-complicated enough to keep a "one-way"
+   version around)
 
 * Multithreading sounds hard.. Could have a standard indicating some info about
   how things are used, for instance if a table is constant, if a function does
