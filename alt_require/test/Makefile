@@ -28,11 +28,10 @@ complex: tic/alt_require.test.toys.complex
 
 # Top-layer-on-client tests from other projects.
 # TODO more arbitrary distinctions
-external_test: sha2
+external_test: sha2 storebin
 
 sha2: tic/merkle.test.sha2  tic/merkle.test.sha2_more
-
-# Don't work; apparent looping.
-merkle: tic/merkle.Merkle.test.merkle
 storebin: tic/storebin.test.pkg tic/storebin.test.test tic/storebin.test.try
+
+merkle: tic/merkle.Merkle.test.merkle
 

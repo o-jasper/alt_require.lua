@@ -32,7 +32,11 @@ function This:init()
          return self:get(method, this.__name, {...}, this.__id)
       end
    end
-   self.got_tables = {}
+
+   self.server_tables = {}
+-- Currently unused. With this on both sides, client can send loops.
+--   self.client_tables = {}
+
    if self.memoize_constant then
       self.table_meta.__index = function(this, key)
          -- Don't have it yet in any case.
@@ -54,18 +58,21 @@ function This:init()
    self.fun_meta = { __call = self.table_meta.__call }
 end
 
-local function prep_for_send(tab)
+local function name_table(tab) return string.sub(tostring(x), 10) end
+
+-- NOTE: cannot deal with loops.
+function This:prep_for_send(tab)
    local ret = {}
    for k,v in pairs(tab) do
       if type(v) == "table" then
-         if v.__is_server_type then
+         if v.__is_server_type then  -- Came from the server before.
             -- Otherwise `storebin` may use `__pairs` and stuff,
             --  and then end up sending stuff that way.
             ret[k] = {__is_server_type = v.__is_server_type,
                       __id = v.__id,
                       __name = v.__name }
          else
-            ret[k] = prep_for_send(tab)
+            ret[k] = self:prep_for_send(v)
          end
       else
          ret[k] = v
@@ -75,7 +82,7 @@ local function prep_for_send(tab)
 end
 
 function This:send_n_receive(url, args)
-   local data = type(args)=="table" and prep_for_send(args) or
+   local data = type(args)=="table" and self:prep_for_send(args) or
       ((method ~= "index" or name ~= args) and args) or nil
    local encoded_data_sent = self.store.encode(data)  -- Need the bloody length.
 
@@ -127,7 +134,7 @@ function This:get(method, name, args, id)
          end
       elseif data.tp == "table" then  -- Is a table.
          assert(not data.val)
-         ret = self.got_tables[id]
+         ret = self.server_tables[id]
          if not ret then
             local const = data.const
             local const = (type(const) == "table" and KeyIn:new(const)) or const
