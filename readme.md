@@ -51,29 +51,24 @@ Could be useful for:
 1. Unless the function came from the server -as-is-, the client cannot send
    functions to the server.
 
-2. Tables client-to-server are copied each time.
-
-   Sending looping tables doesnt work.
-
-   Should be possible to clear out these tables and add a metatable as to
-   en-server-side them. (Unclear *when* to do this)
-
-3. `getmetatable` of a simulacrum, returns the thing simulating the object,
-   so `getmetatable`t itself won't be simulated.
+2. `getmetatable` of a simulacrum, returns the thing simulating the object,
+   so `getmetatable` itself won't be simulated.
 
    Some implementations of classes, `obj.__index` might effectively do it.
 
    Client-to-server are not sent with metatables currently. Barring (1)
    it could.
 
-4. Unknowns..
+3. Unknowns..
 
-5. It seems a little slow, though i see little reason why it should be.
+4. It seems a little slow, though i see little reason why it should be.
    (note: perhaps use other data-transmission stuff, note2: storebin might
    be slow, but not nearly slow enough to explain the low speed)
    
    note3: it looks for `__constant` in tables now, tables that are constant
    are memoized on the other side.
+
+In practice things seem to work with what i wrote for it so-far.
 
 Note: to run these tests, have `lua alt_require/test/server.lua` running.
 
@@ -109,15 +104,20 @@ the )
 I wanted a permissive license, it is under the MIT license accompanied.
 
 ## TODO
-* Better testing. What do metatables on the server do? Does the
-  select-where-to-run portion work nicely?
+* Could be more tests on external projects, and the way server-client is
+  split could be varied.
 
-* Implement a `store` version that ports `json`.
+* (really for storebin) Implement a `store` version that ports `json`.
   (`json` can't do full lua tables..)
   + Can javascript talk to it?
   + "pre-prepared `store`", basically with some definitions already transferred.
 
-* Could build-in the (non-argument)format, instead of using `storebin`. i.e.
+* There is basically some "table-syncing" code in there.
+
+  This can be separated out, and definitions-for-bandwidth-savings could be
+  added.
+
+* Could build-in the top-level format, instead of using `storebin`. i.e.
   `is_server_type` 1byte, `id` 6 bytes, `name`(variable length),
   number-of-arguments, `storebin`-ed each argument.
 
@@ -127,7 +127,7 @@ I wanted a permissive license, it is under the MIT license accompanied.
 * Map projects with recorders, producing graphs with
   [graphviz](http://graphviz.org/).([wp](https://en.wikipedia.org/wiki/Graphviz))
 
-* Many limitations can be removed with bidirectional communication.
+* More limitations can be removed with bidirectional communication.
 
   Both ends could have simulacra, and instead of the value, the server could
   sometimes return requests with not values, but instead ask more information
