@@ -49,16 +49,19 @@ local function figure_input(val, client_vals, server_vals)
          return server_vals[val.__server_id]
       elseif val.__client_id then
          return client_vals[val.__client_id]
-      else
+      elseif val.__mem_client_id then
          local id, ret = assert(val.__mem_client_id), {}
-         if not id then
-            for k,v in pairs(val) do print(k, v) end
-         end
          val.__mem_client_id = nil
          for k,v in pairs(val) do
             ret[k] = figure_input(v, client_vals, server_vals)
          end
          client_vals[id] = ret
+         return ret
+      else
+         local ret = {}
+         for k,v in pairs(val) do
+            ret[k] = figure_input(v, client_vals, server_vals)
+         end
          return ret
       end
    else

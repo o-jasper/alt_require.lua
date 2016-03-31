@@ -77,8 +77,10 @@ function This:prep_for_send(val)
             for k,v in pairs(val) do
                ret[k] = self:prep_for_send(v)
             end
-            ret.__mem_client_id = id
-            self.client_vals[id] = ret
+            if val.__constant then
+               ret.__mem_client_id = id
+               self.client_vals[id] = ret
+            end
             return ret
          end
       end
