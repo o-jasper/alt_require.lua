@@ -1,4 +1,12 @@
-return function(of)
-   assert(({table=true, ["function"]=true})[type(of)])
-   return string.lower(string.match(tostring(of), "0x([%x]+)"))
+local function figure(val)
+   assert(({table=true, ["function"]=true})[type(val)], val)
+   return string.lower(string.match(tostring(val), "0x([%x]+)"))
 end
+
+local function new(into, val)
+   local id = figure(val)
+   into[id] = val
+   return id
+end
+
+return {figure, new}

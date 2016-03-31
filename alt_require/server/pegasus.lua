@@ -16,12 +16,14 @@ This.under_path = ""
 function This:init()
    self.globals = self.globals or {}
    self.server_vals = self.server_vals or {}
+   self.client_vals = self.client_vals or {}
 end
 
-local figure_id = require "alt_require.server.figure_id"
-function This:new_id(to)
-   local id = figure_id(to)
-   self.server_vals[id] = to
+local figure_id, new_id = unpack(require "alt_require.server.figure_id")
+
+function This:new_id(val)
+   local id = new_id(self.server_vals, val)
+--   print("**", id, val)
    return id
 end
 
@@ -41,20 +43,31 @@ function This:pegasus_respond(req, rep)
    end
 end
 
-local function turn_tables(ongoing, tab)
-   local ret = {}
-   for k,v in pairs(tab) do
-      if type(v) == "table" then
-         if v.__is_server_type then  -- Get the function/table.
-            ret[k] = ongoing[v.__id]
-         else
-            ret[k] = turn_tables(ongoing, v)
-         end
+local function figure_input(val, client_vals, server_vals)
+   if type(val) == "table" then
+      if val.__server_id then  -- Get the function/table.
+         return server_vals[val.__server_id]
+      elseif val.__client_id then
+         return client_vals[val.__client_id]
       else
-         ret[k] = v
+         local id, ret = assert(val.__mem_client_id), {}
+         if not id then
+            for k,v in pairs(val) do print(k, v) end
+         end
+         val.__mem_client_id = nil
+         for k,v in pairs(val) do
+            ret[k] = figure_input(v, client_vals, server_vals)
+         end
+         client_vals[id] = ret
+         return ret
       end
+   else
+      return val
    end
-   return ret
+end
+
+function This:figure_input(val)
+   return figure_input(val, self.client_vals, self.server_vals)
 end
 
 local function astring(inp, fmt)
@@ -69,7 +82,7 @@ function This:respond(method, name, id, input_data)
 
    local ret = {}
    -- If some object floating in here.
-   local in_vals = #input_data > 0 and self.store.decode(input_data)
+   local in_vals = self:figure_input(self.store.decode(input_data))
 --   print(method, name, id, #input_data, in_vals and #in_vals, in_vals)
    if id == "global" then  -- A global. (recommended only a handful, or only `require`)
       assert(not in_vals)
@@ -81,8 +94,11 @@ function This:respond(method, name, id, input_data)
    else
       local cur = self.server_vals[id]
       if method == "call" then
-         assert(type(in_vals) == "table")
-         ret = {cur(unpack(turn_tables(self.server_vals, in_vals)))}
+         -- TODO it isn't on 0.. something goes wrong
+         assert(cur and type(in_vals)=="table",
+                string.format("id=%q name=%q cur=%s vals=%s", id, name,
+                              cur, in_vals))
+         ret = {cur(unpack(in_vals))}
       elseif method == "index" then
          ret = {cur[in_vals or name]}
       elseif method == "newindex" then

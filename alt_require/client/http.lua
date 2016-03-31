@@ -29,18 +29,17 @@ function This:init()
    self.table_meta = {}
    for _, method in ipairs{"newindex", "call", "pairs", "len"} do
       self.table_meta["__" .. method] = function(this, ...)
-         return self:get(method, this.__name, {...}, this.__id)
+         return self:get(method, this.__name, {...}, this.__server_id)
       end
    end
 
    self.server_vals = {}
--- Currently unused. With this on both sides, client can send loops.
---   self.client_tables = {}
+   self.client_vals = {}  -- Allows sending loops.
 
    if self.memoize_constant then
-      self.table_meta.__index = function(this, key)
+      self.table_meta.__index = function(this, key)  -- _server_-side table, that is.
          -- Don't have it yet in any case.
-         local got = self:get("index", key, key, this.__id)
+         local got = self:get("index", key, key, this.__server_id)
          -- See if constant.
          local c = rawget(this, "__constant")
          if (c == true) or c and c:inside(key, got) then
@@ -58,32 +57,42 @@ function This:init()
    self.fun_meta = { __call = self.table_meta.__call }
 end
 
-local function name_table(tab) return string.sub(tostring(x), 10) end
+local figure_id = unpack(require "alt_require.server.figure_id")
 
 -- NOTE: cannot deal with loops.
-function This:prep_for_send(tab)
-   local ret = {}
-   for k,v in pairs(tab) do
-      if type(v) == "table" then
-         if v.__is_server_type then  -- Came from the server before.
-            -- Otherwise `storebin` may use `__pairs` and stuff,
-            --  and then end up sending stuff that way.
-            ret[k] = {__is_server_type = v.__is_server_type,
-                      __id = v.__id,
-                      __name = v.__name }
-         else
-            ret[k] = self:prep_for_send(v)
-         end
+function This:prep_for_send(val)
+   if type(val) == "table" then
+      if val.__server_id then  -- Came from the server before.
+         -- Otherwise `storebin` may use `__pairs` and stuff,
+         --  and then end up sending stuff that way.
+         return {__server_id = val.__server_id,
+                 __name = val.__name }  -- A point to it?
       else
-         ret[k] = v
+         local id = figure_id(val)
+         if self.client_vals[id] then  -- Already sent it at some point
+            return {__client_id = id }
+         else
+            local ret = {}
+            for k,v in pairs(val) do
+               ret[k] = self:prep_for_send(v)
+            end
+            ret.__mem_client_id = id
+            self.client_vals[id] = ret
+            return ret
+         end
       end
+   elseif type(val) == "function" then
+      return { __client_id = figure_id(id) }
+   else
+      return val
    end
-   return ret
 end
 
-function This:send_n_receive(url, args)
-   local data = type(args)=="table" and self:prep_for_send(args) or
-      ((method ~= "index" or name ~= args) and args) or nil
+function This:send_n_receive(url, data)
+--   if method == "index" and name == data then data = nil end
+
+--type(args)=="table" and self:prep_for_send(args) or
+--      ( and args) or nil
    local encoded_data_sent = self.store.encode(data)  -- Need the bloody length.
 
    local got = {}
@@ -97,12 +106,10 @@ function This:send_n_receive(url, args)
          ["Content-Type"] = "bin/storebin"
       },
    }
-   if args then
-      req_args.source = function()
-         local ret = encoded_data_sent
-         encoded_data_sent = nil
-         return ret
-      end
+   req_args.source = function()
+      local ret = encoded_data_sent
+      encoded_data_sent = nil
+      return ret
    end
 
    local c, code, headers = http.request(req_args)
@@ -116,14 +123,18 @@ local KeyIn = require "alt_require.KeyIn"
 function This:get(method, name, args, id)
 --   print(method, name, id, unpack(args or {}))
    assert(type(method) == "string")
+   assert(type(id) == "string")
+   assert(method ~= "call" or type(args) == "table")
    local name = tostring(name)
 
-   local url = table.concat({self.under_uri, method, name, id or "0"}, "/")
-   local data_list, ret_list = self:send_n_receive(url, args), {}
+   local url = table.concat({self.under_uri, method, name, id}, "/")
+   local data_list, ret_list =
+      self:send_n_receive(url, self:prep_for_send(args)), {}
 
    -- TODO not other shit in there?
    for _, data in ipairs(data_list) do
       local id, ret = data.id, nil
+      print("-", id)
       if data.tp == "function" then  -- It is a function, that contains the id to track it.
          assert(not data.val)
          ret = self.server_vals[id]
@@ -131,18 +142,18 @@ function This:get(method, name, args, id)
             if self.funs_as_funs then  -- Note then you cannot send the function back.
                ret = function(...) return self:get("call", name, {...}, id) end
             else
-               ret = setmetatable({ __is_server_type="function", __id=id, __name=name},
+               ret = setmetatable({ __server_id=id, __name=name},
                   self.fun_meta)
             end
             self.server_vals[id] = ret
          end
       elseif data.tp == "table" then  -- Is a table.
          assert(not data.val)
-         ret = self.server_vals[id]
+         ret = self.server_vals[id] or self.client_vals[id]
          if not ret then
             local const = data.const
             local const = (type(const) == "table" and KeyIn:new(const)) or const
-            ret = setmetatable({ __is_server_type="table", __id=id, __name=name,
+            ret = setmetatable({ __server_id=id, __name=name,
                                  __constant = const },
                self.table_meta)
             self.server_vals[id] = ret
