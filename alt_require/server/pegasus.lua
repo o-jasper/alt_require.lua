@@ -18,9 +18,9 @@ function This:init()
    self.server_vals = self.server_vals or {}
 end
 
+local figure_id = require "alt_require.server.figure_id"
 function This:new_id(to)
-   assert(({table=true, ["function"]=true})[type(to)])
-   local id = string.lower(string.match(tostring(to), "0x([%x]+)"))
+   local id = figure_id(to)
    self.server_vals[id] = to
    return id
 end
