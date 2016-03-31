@@ -26,12 +26,10 @@ all_client: client.lua client.luajit
 # Looks like this works
 complex: tic/alt_require.test.toys.complex
 
-# Top-layer-on-client tests from other projects.
-# TODO more arbitrary distinctions
-external_test: sha2 storebin
+# Top-layer-on-client tests from other projects. (TODO need to go deeper, obviously)
+top_layer_test: sha2 storebin merkle
 
 sha2: tic/merkle.test.sha2  tic/merkle.test.sha2_more
 storebin: tic/storebin.test.pkg tic/storebin.test.test tic/storebin.test.try
-
 merkle: tic/merkle.Merkle.test.merkle
 

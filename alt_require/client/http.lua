@@ -69,7 +69,8 @@ function This:prep_for_send(val)
                  __name = val.__name }  -- A point to it?
       else
          local id = figure_id(val)
-         if self.client_vals[id] then  -- Already sent it at some point
+           -- Already sent it at some point, just refer to it.
+         if self.client_vals[id] then
             return {__client_id = id }
          else
             local ret = {}
@@ -82,7 +83,8 @@ function This:prep_for_send(val)
          end
       end
    elseif type(val) == "function" then
-      return { __client_id = figure_id(id) }
+      error("can't send functions")
+      -- return { __client_id = figure_id(id) }
    else
       return val
    end
@@ -121,7 +123,6 @@ end
 local KeyIn = require "alt_require.KeyIn"
 
 function This:get(method, name, args, id)
---   print(method, name, id, unpack(args or {}))
    assert(type(method) == "string")
    assert(type(id) == "string")
    assert(method ~= "call" or type(args) == "table")
@@ -134,7 +135,6 @@ function This:get(method, name, args, id)
    -- TODO not other shit in there?
    for _, data in ipairs(data_list) do
       local id, ret = data.id, nil
-      print("-", id)
       if data.tp == "function" then  -- It is a function, that contains the id to track it.
          assert(not data.val)
          ret = self.server_vals[id]

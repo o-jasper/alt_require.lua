@@ -1,5 +1,8 @@
 local function a(x,y) return y .. x .. y end
 
+local loop = {}
+loop.self = loop
+
 return {
    no_args = function() return "no arguments works" end,
    a = a,
@@ -13,4 +16,6 @@ return {
    gg = function(tab, x)
       return a(tab.d(x), x)
    end,
+
+   loop = loop,
 }

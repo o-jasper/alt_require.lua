@@ -94,7 +94,6 @@ function This:respond(method, name, id, input_data)
    else
       local cur = self.server_vals[id]
       if method == "call" then
-         -- TODO it isn't on 0.. something goes wrong
          assert(cur and type(in_vals)=="table",
                 string.format("id=%q name=%q cur=%s vals=%s", id, name,
                               cur, in_vals))
