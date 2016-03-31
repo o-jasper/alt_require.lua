@@ -43,34 +43,40 @@ function This:pegasus_respond(req, rep)
    end
 end
 
-local function figure_input(val, client_vals, server_vals)
+function This:figure_input(val, tmp_client_vals)
    if type(val) == "table" then
       if val.__server_id then  -- Get the function/table.
-         return server_vals[val.__server_id]
+         return self.server_vals[val.__server_id]
       elseif val.__client_id then
-         return client_vals[val.__client_id]
+         return self.client_vals[val.__client_id]
+      elseif val.__tmp_client_id then
+         return tmp_client_vals[val.__tmp_client_id]
       elseif val.__mem_client_id then
-         local id, ret = assert(val.__mem_client_id), {}
-         val.__mem_client_id = nil
+         local id, ret = val.__mem_client_id, {}
+         val.__mem_client_id = nil  -- Already know `id`.
          for k,v in pairs(val) do
-            ret[k] = figure_input(v, client_vals, server_vals)
+            ret[k] = self:figure_input(v, tmp_client_vals)
          end
-         client_vals[id] = ret
+         self.client_vals[id] = ret
+         return ret
+      elseif val.__mem_tmp_client_id then  -- TODO repetative.
+         local id, ret = val.__mem_tmp_client_id, {}
+         val.__mem_tmp_client_id = nil
+         for k,v in pairs(val) do
+            ret[k] = self:figure_input(v, tmp_client_vals)
+         end
+         tmp_client_vals[id] = ret
          return ret
       else
          local ret = {}
          for k,v in pairs(val) do
-            ret[k] = figure_input(v, client_vals, server_vals)
+            ret[k] = self:figure_input(v, tmp_client_vals)
          end
          return ret
       end
    else
       return val
    end
-end
-
-function This:figure_input(val)
-   return figure_input(val, self.client_vals, self.server_vals)
 end
 
 local function astring(inp, fmt)
@@ -85,7 +91,7 @@ function This:respond(method, name, id, input_data)
 
    local ret = {}
    -- If some object floating in here.
-   local in_vals = self:figure_input(self.store.decode(input_data))
+   local in_vals = self:figure_input(self.store.decode(input_data), {})
 --   print(method, name, id, #input_data, in_vals and #in_vals, in_vals)
    if id == "global" then  -- A global. (recommended only a handful, or only `require`)
       assert(not in_vals)

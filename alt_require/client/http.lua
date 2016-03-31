@@ -59,8 +59,10 @@ end
 
 local figure_id = unpack(require "alt_require.server.figure_id")
 
--- NOTE: cannot deal with loops.
-function This:prep_for_send(val)
+-- TODO synchronizing tables might be something that can be separated out.
+--   including allowing for loops and optimizations by synchronizing accross
+--   definitions.(but then, that might not be aware of constancy?)
+function This:prep_for_send(val, tmp_client)
    if type(val) == "table" then
       if val.__server_id then  -- Came from the server before.
          -- Otherwise `storebin` may use `__pairs` and stuff,
@@ -72,14 +74,19 @@ function This:prep_for_send(val)
            -- Already sent it at some point, just refer to it.
          if self.client_vals[id] then
             return {__client_id = id }
+         elseif tmp_client[id] then
+            return { __tmp_client_id = id }
          else
             local ret = {}
-            for k,v in pairs(val) do
-               ret[k] = self:prep_for_send(v)
-            end
             if val.__constant then
                ret.__mem_client_id = id
-               self.client_vals[id] = ret
+               self.client_vals[id] = true
+            else
+               ret.__mem_tmp_client_id = id
+               tmp_client[id] = true
+            end
+            for k,v in pairs(val) do
+               ret[k] = self:prep_for_send(v, tmp_client)
             end
             return ret
          end
@@ -132,7 +139,7 @@ function This:get(method, name, args, id)
 
    local url = table.concat({self.under_uri, method, name, id}, "/")
    local data_list, ret_list =
-      self:send_n_receive(url, self:prep_for_send(args)), {}
+      self:send_n_receive(url, self:prep_for_send(args, {})), {}
 
    -- TODO not other shit in there?
    for _, data in ipairs(data_list) do
