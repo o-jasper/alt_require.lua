@@ -14,15 +14,15 @@ This.matcher = "^/?([^/]+)/?([^/]+)/?([^/]+)$"
 This.under_path = ""
 
 function This:init()
-   self.prev_id = 0
    self.globals = self.globals or {}
-   self.ongoing = self.ongoing or {}
+   self.server_vals = self.server_vals or {}
 end
 
 function This:new_id(to)
-   self.prev_id = self.prev_id + 1
-   self.ongoing[tostring(self.prev_id)] = to
-   return tostring(self.prev_id)
+   assert(({table=true, ["function"]=true})[type(to)])
+   local id = string.lower(string.match(tostring(to), "0x([%x]+)"))
+   self.server_vals[id] = to
+   return id
 end
 
 function This:pegasus_respond(req, rep)
@@ -77,12 +77,12 @@ function This:respond(method, name, id, input_data)
       assert(method == "index")
       ret = {self.globals[name]}
    elseif method == "gc" then  -- Garbage collection.(hopefully)
-      ret = {function() self.ongoing[id] = nil end}
+      ret = {function() self.server_vals[id] = nil end}
    else
-      local cur = self.ongoing[id]
+      local cur = self.server_vals[id]
       if method == "call" then
          assert(type(in_vals) == "table")
-         ret = {cur(unpack(turn_tables(self.ongoing, in_vals)))}
+         ret = {cur(unpack(turn_tables(self.server_vals, in_vals)))}
       elseif method == "index" then
          ret = {cur[in_vals or name]}
       elseif method == "newindex" then
