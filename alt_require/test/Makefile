@@ -32,4 +32,4 @@ top_layer_test: sha2 storebin merkle
 sha2: tic/merkle.test.sha2  tic/merkle.test.sha2_more
 storebin: tic/storebin.test.pkg tic/storebin.test.test tic/storebin.test.try
 merkle: tic/merkle.Merkle.test.merkle
-
+Searcher: tic/Searcher.test.sql tic/Searcher.test.try_Formulator
