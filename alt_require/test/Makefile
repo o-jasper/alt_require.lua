@@ -27,9 +27,16 @@ all_client: client.lua client.luajit
 complex: tic/alt_require.test.toys.complex
 
 # Top-layer-on-client tests from other projects. (TODO need to go deeper, obviously)
-top_layer_test: sha2 storebin merkle
+top_layer_test: sha2 storebin merkle Searcher page_html/util
 
 sha2: tic/merkle.test.sha2  tic/merkle.test.sha2_more
 storebin: tic/storebin.test.pkg tic/storebin.test.test tic/storebin.test.try
 merkle: tic/merkle.Merkle.test.merkle
 Searcher: tic/Searcher.test.sql tic/Searcher.test.try_Formulator
+
+# Don't really use string_split now.
+page_html/util_meh: tic/page_html.util.test.string_split tic/page_html.util.test.try
+# Markdown and "escapeless"
+#  latter might move to Searcher later, as it is intended to keep strings from
+#  getting into your Sql thing.
+page_html/util: tic/page_html.util.fmt.test.fmts
