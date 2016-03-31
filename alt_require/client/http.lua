@@ -33,7 +33,7 @@ function This:init()
       end
    end
 
-   self.server_tables = {}
+   self.server_vals = {}
 -- Currently unused. With this on both sides, client can send loops.
 --   self.client_tables = {}
 
@@ -126,21 +126,26 @@ function This:get(method, name, args, id)
       local id, ret = data.id, nil
       if data.tp == "function" then  -- It is a function, that contains the id to track it.
          assert(not data.val)
-         if self.funs_as_funs then  -- Note then you cannot send the function back.
-            ret = function(...) return self:get("call", name, {...}, id) end
-         else
-            ret = setmetatable({ __is_server_type="function", __id=id, __name=name},
-               self.fun_meta)
+         ret = self.server_vals[id]
+         if not ret then
+            if self.funs_as_funs then  -- Note then you cannot send the function back.
+               ret = function(...) return self:get("call", name, {...}, id) end
+            else
+               ret = setmetatable({ __is_server_type="function", __id=id, __name=name},
+                  self.fun_meta)
+            end
+            self.server_vals[id] = ret
          end
       elseif data.tp == "table" then  -- Is a table.
          assert(not data.val)
-         ret = self.server_tables[id]
+         ret = self.server_vals[id]
          if not ret then
             local const = data.const
             local const = (type(const) == "table" and KeyIn:new(const)) or const
             ret = setmetatable({ __is_server_type="table", __id=id, __name=name,
                                  __constant = const },
                self.table_meta)
+            self.server_vals[id] = ret
          end
       elseif data.tp == "error" then -- Shouldnt be touching this.
          error(string.format("Server doesn't allow touching %q", req_args.url))
