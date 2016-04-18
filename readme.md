@@ -23,14 +23,24 @@ so arbitrary functions can be applied, like:
     control.
 
     A particular override of `require` can obviously apply different
-    restrictions to different files.
+    restrictions and changes to different files.
   + If you assume lua "provides no escapes", and there are no bugs here,
     it can essentially be used for Mandatory Access Control. Unclear on
     the certainty of there being no escapes.
 
+* Third one of the above, but worthy of mentioning again, `require` can be
+  altered to give different results from different files, so you can change
+  them differently in different cases, making programs more modular.
+
+  One question about this is how easy this is on the mind.. Probably better
+  to have a differently named function get things of the same concept.
+
 * The below; accessing things actually returns objects that are handles that
   talk to an external server; a "simulacrum based on the entity on the other
   server" to say it fancy.
+
+### API
+**TODO**
 
 # ~~Magic~~ across-server lua
 Uses [storebin](https://github.com/o-jasper/storebin),
@@ -45,6 +55,9 @@ Could be useful for:
 * Mandatory Access Control, if it is desired to isolate portions of code.
 
 * Magic moving code between client and server. However, clouds are bad.
+
+### API
+**TODO**
 
 #### (Current)Limitations:
 
@@ -92,7 +105,7 @@ to cut pegasus out of the loop.
 If packages are made available to lua, `make` runs the non-server tests.
 
 For the server tests, you need the dependencies above, go to
-`alt_require/test/`, the `Makefile` there shows the basic commands used.
+`alt_require/test/`.(use the `Makefile` to see how some commands work there)
 
 To run the server test, `make run_server` to run a server, and then
 `make all_client` runs the client tests using that server.
@@ -104,6 +117,8 @@ the )
 I wanted a permissive license, it is under the MIT license accompanied.
 
 ## TODO
+* Much better documentation regarding the core part.
+
 * Could be more tests on external projects, and the way server-client is
   split could be varied.
 
