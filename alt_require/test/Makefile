@@ -8,7 +8,7 @@ default:
 
 # Needed to run any server tests.
 run_server:
-	lua ../../bin/alt_require.lua
+	lua ../bin/alt_require.lua
 
 ### Non-server tests.
 all_non_server: simple.lua simple.luajit
