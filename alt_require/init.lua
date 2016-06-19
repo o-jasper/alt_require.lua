@@ -7,7 +7,7 @@ local raw_require_fun = Public.raw_require_fun
 local function new_state(pkgstr, old_state)
    local new_state = {}
    for k,v in pairs(old_state) do new_state[k] = v end
-   new_state.in_package = pkgstr
+   new_state.package = pkgstr
    return new_state
 end
 
@@ -28,14 +28,14 @@ local function handle_require(got, pkgstr, full_pkgstr, state, pt,globs)
       end
    elseif not got then  -- Recursively.
       --return state.recurse(full_pkgstr)
-      return raw_require_fun(full_pkgstr, new_state(full_pkgstr, state), pt,globs)()
+      return raw_require_fun(new_state(full_pkgstr, state), pt,globs)()
    else
       error([[Require may only be a function, `false`/`nil` indicating,
 or a table containing those]])
    end
 end
 
-local function require_fun_1(package_str, state, pt,globs)
+local function require_fun_1(state, pt,globs)
    local got = globs.require
    if type(got) ~= "function" then
       globs.require = function(pkgstr)
@@ -44,9 +44,9 @@ local function require_fun_1(package_str, state, pt,globs)
    end
    -- Tells how to recurse. (so you can.)
    state.recurse = function(pkgstr)
-      return raw_require_fun(pkgstr, new_state(pkgstr, state), pt,globs)()
+      return raw_require_fun(new_state(pkgstr, state), pt,globs)()
    end
-   return raw_require_fun(package_str, state, pt,globs)
+   return raw_require_fun(state, pt,globs)
 end
 
 local function combine_globals(globals, list)
@@ -60,14 +60,12 @@ local function combine_globals(globals, list)
    return gs
 end
 
-local function require_fun(package_str, state, pass_through, globals, first, ...)
-   assert(type(package_str) == "string")
+local function require_fun(state, pass_through, globals, first, ...)
    local globals = first and combine_globals(globals, {first, ...}) or globals or "simple"
    if type(globals) == "string" then
       globals = require("alt_require.glob." .. globals)
    end
-   state = state or { in_package = package_str }
-   return require_fun_1(package_str, state, pass_through, globals)
+   return require_fun_1(state, pass_through, globals)
 end
 
 Public.require_fun = require_fun

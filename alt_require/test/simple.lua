@@ -12,7 +12,7 @@ local tree_counter   = pt("inpackage_counts")(tree_cnts)
 -- Require function override, including applying the `require` global itself to
 -- continue the override.
 local function req(str, pts)
-   return alt_require.require(str, { in_package = str }, pts)
+   return alt_require.require({ package = str }, pts)
 end
 
 -- Run using pass-throughs; different ways of recording;
