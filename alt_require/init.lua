@@ -13,6 +13,7 @@ end
 
 -- `pt` stands for pass_through and `globs` for globals.
 local function handle_require(got, pkgstr, full_pkgstr, state, pt,globs)
+   assert(state)
    if type(got) == "function" then  -- Verbatim.
       return got(full_pkgstr)
    elseif type(got) == "table" then  -- However table thinks it should.
@@ -21,11 +22,11 @@ local function handle_require(got, pkgstr, full_pkgstr, state, pt,globs)
       end
 
       local pre, post = string.match(pkgstr, "([^.]+)[.](,+)?")
+      pre = pre or "default"
       if not pre then
-         return handle_require(tab.default, pkgstr, full_pkgstr)
-      else
-         return handle_require(tab[pre], post, full_pkgstr)
+         pre, post = "default", pkgstr
       end
+      return handle_require(got[pre], post, full_pkgstr, state, pt,globs)
    elseif not got then  -- Recursively.
       --return state.recurse(full_pkgstr)
       return raw_require_fun(new_state(full_pkgstr, state), pt,globs)()
