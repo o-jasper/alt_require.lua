@@ -34,6 +34,7 @@ function This:pegasus_respond(req, rep)
          string.match(string.sub(path, #self.under_path + 2),  self.matcher)
       if name then
          -- Currently at least, pegasus needs headers out first.
+         req:headers()
          local input_data = req:receiveBody()
          local str = self:respond(method, name, id, input_data)
          -- TODO header depends on `self.store`.
