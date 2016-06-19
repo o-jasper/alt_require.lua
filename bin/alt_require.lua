@@ -4,7 +4,7 @@ local receiver = require("alt_require.server.pegasus"):new{
    globals=globals, under_path="alt_require"}
 
 local prevstr, prevstr_n = "", 0
-require("pegasus"):new{ port=26019}:start(function(req, rep)
+require("pegasus"):new{ port=tonumber(arg[1]) or 26019 }:start(function(req, rep)
       local method, name, id = receiver:pegasus_respond(req, rep)
       if not method then
          rep:addHeader('Content-Type', 'bin/storebin'):write("No response")
