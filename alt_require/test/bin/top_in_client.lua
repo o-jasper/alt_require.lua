@@ -7,11 +7,8 @@ local sender = require("alt_require.client.http"):new{
 
 -- Only the given file is run locally, rest on server side.
 local function req(str)
-   return alt_require({in_package=str}, {},
-      sender:globals(nil, req),
-      require "alt_require.glob.all"
-      --{ __envname="reqself", require = req }
-   )(str)()
+   return alt_require({package=str}, {}, sender:globals(nil, req),
+      require "alt_require.glob.all")
 end
 
 req(arg[1])

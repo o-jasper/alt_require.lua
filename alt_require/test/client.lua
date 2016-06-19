@@ -6,11 +6,8 @@ local sender = require("alt_require.client.http"):new{
 }
 
 local function req(str, cg)
-   return alt_require({in_package=str}, {},
-      sender:globals(cg, function(s) return req(s, cg) end),
-      require "alt_require.glob.simple"
-      --{ __envname="reqself", require = req }
-   )(str)()
+   local globals = sender:globals(cg, function(s) return req(s, cg) end)
+   return alt_require({package=str}, {}, globals, require "alt_require.glob.simple")
 end
 
 print("---", "all require on other end")
