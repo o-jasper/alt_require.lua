@@ -22,9 +22,7 @@ end
 local figure_id, new_id = unpack(require "alt_require.server.figure_id")
 
 function This:new_id(val)
-   local id = new_id(self.server_vals, val)
---   print("**", id, val)
-   return id
+   return new_id(self.server_vals, val)
 end
 
 function This:pegasus_respond(req, rep)
