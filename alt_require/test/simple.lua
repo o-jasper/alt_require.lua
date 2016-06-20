@@ -3,17 +3,13 @@ local function r(x)  return require("alt_require" .. x) end
 local function pt(x) return r(".pt." .. x) end  -- (pt) stands for pass-through.
 
 local alt_require = r ""
+local req = alt_require.require  -- happen to not need globals, so can do this..
 
 -- Differnt pass-throughs and objects they record into.
 local list, cnts, tree_cnts = {}, {}, {}
 local tabulizer = pt("tabulize")(list)
 local counter   = pt("keep_count")(cnts)
 local tree_counter   = pt("inpackage_counts")(tree_cnts)
--- Require function override, including applying the `require` global itself to
--- continue the override.
-local function req(str, pts)
-   return alt_require.require({ package = str }, pts)
-end
 
 -- Run using pass-throughs; different ways of recording;
 --  printing, tabularizing into flatly into `list`(with values), flatly with counts of use,

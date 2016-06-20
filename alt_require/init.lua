@@ -2,8 +2,6 @@
 local Public = {}
 for k,v in pairs(require "alt_require.alt_require") do Public[k] = v end
 
-local raw_require_fun = Public.raw_require_fun
-
 local function new_state(pkgstr, old_state)
    local new_state = {}
    for k,v in pairs(old_state) do new_state[k] = v end
@@ -11,67 +9,34 @@ local function new_state(pkgstr, old_state)
    return new_state
 end
 
--- `pt` stands for pass_through and `globs` for globals.
-local function handle_require(got, pkgstr, full_pkgstr, state, pt,globs)
-   assert(state)
-   if type(got) == "function" then  -- Verbatim.
-      return got(full_pkgstr)
-   elseif type(got) == "table" then  -- However table thinks it should.
-      if got[1] == "function" then  -- user-defined based on info available.
-         return got[1](full_pkgstr, state,pt,globs)
-      end
-
-      local pre, post = string.match(pkgstr, "([^.]+)[.](,+)?")
-      pre = pre or "default"
-      if not pre then
-         pre, post = "default", pkgstr
-      end
-      return handle_require(got[pre], post, full_pkgstr, state, pt,globs)
-   elseif not got then  -- Recursively.
-      --return state.recurse(full_pkgstr)
-      return raw_require_fun(new_state(full_pkgstr, state), pt,globs)()
-   else
-      error([[Require may only be a function, `false`/`nil` indicating,
-or a table containing those]])
+local function combine_globals(globals, ...)
+   local function rg(str)
+      return (type(str) == "string" and require("alt_require.glob." .. str)) or str
    end
-end
-
-local function require_fun_1(state, pt,globs)
-   local got = globs.require
-   if type(got) ~= "function" then
-      globs.require = function(pkgstr)
-         return handle_require(got, pkgstr, pkgstr, state, pt,globs)
-      end
-   end
-   -- Tells how to recurse. (so you can.)
-   state.recurse = function(pkgstr)
-      return raw_require_fun(new_state(pkgstr, state), pt,globs)()
-   end
-   return raw_require_fun(state, pt,globs)
-end
-
-local function combine_globals(globals, list)
    local gs = {}
-   for k,v in pairs(globals) do
+   for k,v in pairs(rg(globals)) do
       gs[k] = v
    end
-   for _, g in ipairs(list) do
-      for k,v in pairs(g) do gs[k] = v end
+   for _, g in ipairs{...} do
+      for k,v in pairs(rg(g)) do gs[k] = v end
    end
    return gs
 end
 
-local function require_fun(state, pass_through, globals, first, ...)
-   local globals = first and combine_globals(globals, {first, ...}) or globals or "simple"
-   if type(globals) == "string" then
-      globals = require("alt_require.glob." .. globals)
+local raw_require = Public.raw_require
+
+local function alt_require(state, pass_through, globals, ...)
+   local state = type(state)=="string" and {package=state} or state
+
+   local globals = combine_globals(globals or "simple", ...)
+   local provided_require = globals.require
+   local used_require = globals.require or raw_require
+   globals.require = function(pkgstr)
+      return used_require(new_state(pkgstr, state), pass_through, globals)
    end
-   return require_fun_1(state, pass_through, globals)
+   return raw_require(state, pass_through, globals)
 end
 
-Public.require_fun = require_fun
-Public.require = function(...)
-   return require_fun(...)()
-end
+Public.require = alt_require
 
 return Public

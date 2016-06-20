@@ -6,9 +6,7 @@ local receiver = require("alt_require.server.pegasus"):new{
 local prevstr, prevstr_n = "", 0
 require("pegasus"):new{ port=tonumber(arg[1]) or 26019 }:start(function(req, rep)
       local method, name, id = receiver:pegasus_respond(req, rep)
-      if not method then
-         rep:addHeader('Content-Type', 'bin/storebin'):write("No response")
-      else
+      if method then
          local str = string.format("%s\t%s\t%s", method, name, id)
          if str == prevstr then
             prevstr_n = prevstr_n + 1
@@ -21,5 +19,7 @@ require("pegasus"):new{ port=tonumber(arg[1]) or 26019 }:start(function(req, rep
                prevstr_n = 0
             end
          end
+      else
+         rep:addHeader('Content-Type', 'bin/storebin'):write("No response")
       end
 end)

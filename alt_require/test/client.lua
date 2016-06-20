@@ -5,9 +5,9 @@ local sender = require("alt_require.client.http"):new{
    under_path = "alt_require",
 }
 
-local function req(str, cg)
-   local globals = sender:globals(cg, function(s) return req(s, cg) end)
-   return alt_require({package=str}, {}, globals, require "alt_require.glob.simple")
+-- Add the `require` that works via the client, and the the overall one.
+local function req(str)
+   return alt_require(str, {}, sender:globals(nil, req),"simple")
 end
 
 print("---", "all require on other end")

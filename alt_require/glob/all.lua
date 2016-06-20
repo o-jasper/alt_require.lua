@@ -30,7 +30,7 @@ return {
    table = table,
    next = next,
    rawset = rawset,
-   require = require,
+--   require = require,  -- regular `require` doesn't work, the default works like it.
    pairs = pairs,
    collectgarbage = collectgarbage,
    module = module,

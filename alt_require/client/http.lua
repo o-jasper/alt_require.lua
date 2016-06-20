@@ -125,7 +125,8 @@ function This:send_n_receive(url, data)
 
    local c, code, headers = http.request(req_args)
    -- TODO try again.
-   assert(code == 200, string.format("I am really bad with hickups! %q (%s)", code, c))
+   assert(code == 200,
+          string.format("I am really bad with server hickups! %q (%s)", code, c))
    return self.store.decode(table.concat(got)) or {}
 end
 
@@ -189,7 +190,9 @@ end
 This.require = require
 
 function This:require_fun(selection, local_require)
-   local fun = self:get("index", "require", nil, "global")
+   local fun = function(state)
+      return self:get("index", "require", nil, "global")(state.package)
+   end
    return (selection == nil and fun) or
       function(str)
          if selection[str] then

@@ -58,12 +58,12 @@ local function load_pkg(package_str, env)
    return loadfile(file, nil, env)
 end
 
-local function raw_require_fun(state, pass_through, globals_tab)
-   return load_pkg(state.package, globals(state, pass_through, globals_tab))
+local function raw_require(state, pass_through, globals_tab)
+   return load_pkg(state.package, globals(state, pass_through, globals_tab))()
 end
 
-return { findfile        = findfile,
-         raw_require_fun = raw_require_fun,
+return { findfile    = findfile,
+         raw_require = raw_require,
 
          globals_index = globals_index,
          globals = globals,
