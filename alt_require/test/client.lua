@@ -7,7 +7,7 @@ local sender = require("alt_require.client.http"):new{
 
 -- Add the `require` that works via the client, and the the overall one.
 local function req(str)
-   return alt_require(str, {}, sender:globals(nil, req),"simple")
+   return alt_require(str, {}, sender:globals(req),"simple")
 end
 
 print("---", "all require on other end")

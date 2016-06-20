@@ -9,7 +9,7 @@ local sender = require("alt_require.client.http"):new{
 local function req(str)
 --   local globals = ar.combine_globals(
 --                                      require "alt_require.glob.all")
-   return alt_require(str, {}, sender:globals(nil, req), "all")
+   return alt_require(str, {}, sender:globals(req), "all")
 end
 
 req(arg[1])

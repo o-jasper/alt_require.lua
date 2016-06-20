@@ -189,12 +189,13 @@ end
 
 This.require = require
 
-function This:require_fun(selection, local_require)
+function This:require_fun(local_require, selection)
    local fun = function(state)
       return self:get("index", "require", nil, "global")(state.package)
    end
    return (selection == nil and fun) or
-      function(str)
+      function(state)
+         local str = state.package
          if selection[str] then
             return fun(str)
          else
@@ -202,9 +203,9 @@ function This:require_fun(selection, local_require)
          end
       end
 end
-function This:globals(require_selection, local_require)
+function This:globals(local_require, require_selection)
    return { __envname="http-client",
-            require = self:require_fun(require_selection, local_require) }
+            require = self:require_fun(local_require, require_selection) }
 end
 
 return This
