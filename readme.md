@@ -1,3 +1,7 @@
+**TODO** link to story first, API's first, story after,.
+
+**TODO** improve API.
+
 ## Lua global and package control
 "Sandboxing" using `loadfile`, replacing the environment to record, determine,
 and/or restrict things. Basically want no distinctions between `lua` and `luajit`.
@@ -6,7 +10,51 @@ and/or restrict things. Basically want no distinctions between `lua` and `luajit
 To spell it out somewhat, using `loadfile(filename, mode, environment)` it makes an
 alternative `require`, that finds the file(`alt_require.findfile`) and makes
 an `environment`. The environment can be a table or get things via a metatable,
-so arbitrary functions can be applied, like:
+so arbitrary functions can be applied, like.
+
+### API  **TODO** live up to it.
+Once installed `local alt_require = require "alt_require"`.
+
+* `.require(state, pass_through, [globals, ...])` 
+
+  + `state` is the state to work with.
+  
+    `state.package` will indicate what package to read, if `state` is a string,
+    it will be as if `{ package=that_string }` is passed.
+    
+
+  + `pass_through(state, globals, key,val)` is a function (a list will be composed)
+    that get those arguments. Here, `state` is as above,
+
+    The output is the resultant value.
+
+  + `globals, ...` are what globals are at that point. If a list they're rolled
+    into one *by changing the first*. If any are string
+    `require "alt_require.glob." .. that_string`.
+
+    `globals.require` instead of taking in the package name, it gets
+    `state, pass_through, globals`, so information for alternatives is needed.
+    
+    If no `globals.require` is provided, a default that keeps the sandbox going is
+    used.
+
+You'll want to actually do something with it, some `pass_through` are in
+`"alt_require.pt."`, they're pretty simple. In there: (`prep="alt_require.pt."`)
+
+* `require(prep.."inpackage_counts")(table)` counts in 
+   `table[package_name][key_name]`, i.e. what is accessed from where.
+* `require(prep.."keep_count")(table)` counts in `table[key_name]`
+  same, but doesn't care about what package it is from.
+* `require(prep.."block_error")(table)` produces errors if
+   `table[package_name][key_name]` has no entry and is accessed.
+   
+   Of course, `inpackage_counts` can collect what accesses what, and then
+   this one can use the resulting table to enforce it.
+ 
+* `require(prep.."print")(table)` Prints what global is accessed from
+  where.
+
+#### Uses:
 
 * Recording what is being accessed, from where, to an extent.
 
@@ -39,9 +87,6 @@ so arbitrary functions can be applied, like:
   talk to an external server; a "simulacrum based on the entity on the other
   server" to say it fancy.
 
-### API
-**TODO**
-
 # ~~Magic~~ across-server lua
 Uses [storebin](https://github.com/o-jasper/storebin),
 [Pegasus](https://github.com/EvandroLG/pegasus.lua/) and
@@ -57,7 +102,23 @@ Could be useful for:
 * Magic moving code between client and server. However, clouds are bad.
 
 ### API
-**TODO**
+You have to run the server(s) first, `alt_require.bin.alt_require` can be
+run as-is. `C = require("alt_require.client.http")` is the class.
+
+* `c = C:new{`
+  
+  `under_site = "http://localhost:26019/",`  site to send the requests.
+
+  `under_path = "alt_require"},` Parh on the site.
+
+* `c:globals(local_require, require_selection)`
+
+  The globals with the `:require_fun(local_require, require_selection)` in it.
+  Careful that you don't override `globals.require` afterward.
+  
+  If `require_selection` not `nil` then if `require_selection[package_name]`
+  then it will ask the server, and otherwise it will use `local_require`
+  to run it locally.
 
 #### (Current)Limitations:
 
@@ -83,38 +144,22 @@ Could be useful for:
 
 In practice things seem to work with what i wrote for it so-far.
 
-Note: to run these tests, have `lua alt_require/test/server.lua` running.
+#### More internal API
+This does not attempt to put any control inside objects that it returns,
+but the globals it produces, like `require` can be modified to do so.
 
-### Dependencies
-The non-client server stuff just uses plain lua.(no dependencies)
+* `.findfile(package_str)`, finds which file `require` would find the
+  lua file in question, as lua does not expose that function.
 
-For the portion with the client-talks-to-lua-on-server, requires
-[storebin](https://github.com/o-jasper/storebin),
-[Pegasus](https://github.com/EvandroLG/pegasus.lua/) and
-[lua-socket](https://github.com/diegonehab/luasocket).
+* `.globals_index(state, pass_through, globals)` returns a function for `__index`
+  of an environment
 
-Storebin can be replaced with an object  with `.encode(tree)` &rarr; `data`
-`.decode(data)` &rarr; `tree`. Of course the client and server side have to use
-the same one.
+  &rarr; `.globals()` Just the above, but the table with it.
 
-The pegasus-based thing can probably also be plugged into another server by
-calling `:respond` appropriately. Perhaps in the future i'll have an option
-to cut pegasus out of the loop.
-
-### Running the tests
-If packages are made available to lua, `make` runs the non-server tests.
-
-For the server tests, you need the dependencies above, go to
-`alt_require/test/`.(use the `Makefile` to see how some commands work there)
-
-To run the server test, `make run_server` to run a server, and then
-`make all_client` runs the client tests using that server.
-
-(server prints out `method, accessname, object_tracking_number`, currently omits
-the )
+* `.raw_require(state, pass_through, globals)`
 
 ## License
-I wanted a permissive license, it is under the MIT license accompanied.
+It is under the MIT license accompanied.
 
 ## TODO
 * Much better documentation regarding the core part.
@@ -151,7 +196,3 @@ I wanted a permissive license, it is under the MIT license accompanied.
   This can be done with the plain http and pegasus-approach.
   (however, it might make things more-complicated enough to keep a "one-way"
    version around)
-
-* Multithreading sounds hard.. Could have a standard indicating some info about
-  how things are used, for instance if a table is constant, if a function does
-  not change state of anything.(or even what it changes)
