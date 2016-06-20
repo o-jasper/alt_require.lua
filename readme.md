@@ -105,15 +105,12 @@ Could be useful for:
 You have to run the server(s) first, `alt_require.bin.alt_require` can be
 run as-is. `C = require("alt_require.client.http")` is the class.
 
-* `c = C:new{`
-  
-  `under_site = "http://localhost:26019/",`  site to send the requests.
-
-  `under_path = "alt_require"},` Parh on the site.
+* `c = C:new{under_uri = "http://localhost:26019/alt_require"}`
+  With just the default site to send the requests.
 
 * `c:globals(local_require, require_selection)`
 
-  The globals with the `:require_fun(local_require, require_selection)` in it.
+  The globals with the `c:require_fun(local_require, require_selection)` in it.
   Careful that you don't override `globals.require` afterward.
   
   If `require_selection` not `nil` then if `require_selection[package_name]`

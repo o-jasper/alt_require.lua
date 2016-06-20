@@ -23,13 +23,13 @@ This.under_path = ""
 This.memoize_constant = true
 
 function This:init()
-   assert(self.under_site, "Need to specify what server to connect to.")
-   self.under_uri = self.under_uri or self.under_site .. "/" .. self.under_path
+   assert(self.under_uri, "Need to specify what server to connect to.")
 
    self.table_meta = {}
    for _, method in ipairs{"newindex", "call", "pairs", "len"} do
       self.table_meta["__" .. method] = function(this, ...)
-         return self:get(method, this.__name, {...}, this.__server_id)
+         return self:get(rawget(this, "__under_uri"), method,
+                         rawget(this, "__name"), {...}, rawget(this, "__server_id"))
       end
    end
 
@@ -39,7 +39,8 @@ function This:init()
    if self.memoize_constant then
       self.table_meta.__index = function(this, key)  -- _server_-side table, that is.
          -- Don't have it yet in any case.
-         local got = self:get("index", key, key, this.__server_id)
+         local got = self:get(rawget(this, "__under_uri"),
+                              "index", key, key, rawget(this, "__server_id"))
          -- See if constant.
          local c = rawget(this, "__constant")
          if (c == true) or c and c:inside(key, got) then
@@ -49,7 +50,8 @@ function This:init()
       end
    else
       self.table_meta.__index = function(this, key)
-         return self:get("index", key, key, this.__id)
+         return self:get(rawget(this, "__under_uri"), "index",
+                         key, key, rawget(this, "__id"))
       end
    end
 
@@ -132,13 +134,13 @@ end
 
 local KeyIn = require "alt_require.KeyIn"
 
-function This:get(method, name, args, id)
+function This:get(under_uri, method, name, args, id)
    assert(type(method) == "string")
    assert(type(id) == "string")
    assert(method ~= "call" or type(args) == "table")
    local name = tostring(name)
 
-   local url = table.concat({self.under_uri, method, name, id}, "/")
+   local url = table.concat({under_uri or self.under_uri, method, name, id}, "/")
    local data_list, ret_list =
       self:send_n_receive(url, self:prep_for_send(args, {})), {}
 
@@ -150,9 +152,9 @@ function This:get(method, name, args, id)
          ret = self.server_vals[id]
          if not ret then
             if self.funs_as_funs then  -- Note then you cannot send the function back.
-               ret = function(...) return self:get("call", name, {...}, id) end
+               ret = function(...) return self:get(under_uri, "call", name, {...}, id) end
             else
-               ret = setmetatable({ __server_id=id, __name=name},
+               ret = setmetatable({ __under_uri=under_uri, __server_id=id, __name=name},
                   self.fun_meta)
             end
             self.server_vals[id] = ret
@@ -163,7 +165,7 @@ function This:get(method, name, args, id)
          if not ret then
             local const = data.const
             local const = (type(const) == "table" and KeyIn:new(const)) or const
-            ret = setmetatable({ __server_id=id, __name=name,
+            ret = setmetatable({ __under_uri=under_uri, __server_id=id, __name=name,
                                  __constant = const },
                self.table_meta)
             self.server_vals[id] = ret
@@ -191,13 +193,18 @@ This.require = require
 
 function This:require_fun(local_require, selection)
    local fun = function(state)
-      return self:get("index", "require", nil, "global")(state.package)
+      return self:get(nil, "index", "require", nil, "global")(state.package)
    end
    return (selection == nil and fun) or
       function(state)
          local str = state.package
-         if selection[str] then
+         local sel = selection[str]
+         if sel == true then
             return fun(str)
+         elseif sel then
+            return function(state)
+               return self:get(sel, "index", "require", nil, "global")(state.package)
+            end
          else
             return (local_require or self.require)(str)
          end

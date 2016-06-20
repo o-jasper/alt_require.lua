@@ -1,8 +1,7 @@
 local alt_require = require("alt_require").require
 
 local sender = require("alt_require.client.http"):new{
-   under_site  = "http://localhost:26019/",
-   under_path = "alt_require",
+   under_uri  = "http://localhost:26019/alt_require",
 }
 
 -- Only the given file is run locally, rest on server side.
