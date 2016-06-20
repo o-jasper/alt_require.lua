@@ -191,28 +191,35 @@ end
 
 This.require = require
 
-function This:require_fun(local_require, selection)
-   local fun = function(state)
-      return self:get(nil, "index", "require", nil, "global")(state.package)
+function This:require_fun(local_require, dict, strict)
+   local function into_sel(sel)
+      return function(state)
+         return self:get(sel, "index", "require", nil, "global")(state.package)
+      end
    end
-   return (selection == nil and fun) or
-      function(state)
-         local str = state.package
-         local sel = selection[str]
-         if sel == true then
-            return fun(str)
-         elseif sel then
-            return function(state)
-               return self:get(sel, "index", "require", nil, "global")(state.package)
-            end
-         else
-            return (local_require or self.require)(str)
+   local function strict_fun(state)
+      local str = state.package
+      local sel = dict[str]
+      if sel then
+         return into_sel(sel ~= true and sel or nil)
+      else
+         return (local_require or self.require)(str)
+      end
+   end
+   local function loose_fun(state)
+      local str = state.package
+      for _, el in ipairs(dict) do
+         if string.find(str, "^", string.gsub("[.]", "[.]", el[1])) then
+            return into_sel(el[2])
          end
       end
+      return (local_require or self.require)(str)
+   end
+   return (dict == nil and into_sel(nil)) or (strict and strict_fun) or loose_fun
 end
-function This:globals(local_require, require_selection)
+function This:globals(local_require, ...)
    return { __envname="http-client",
-            require = self:require_fun(local_require, require_selection) }
+            require = self:require_fun(local_require, ...) }
 end
 
 return This
