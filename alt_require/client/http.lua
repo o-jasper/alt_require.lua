@@ -28,7 +28,7 @@ function This:init()
    self.table_meta = {}
    for _, method in ipairs{"newindex", "call", "pairs", "len"} do
       self.table_meta["__" .. method] = function(this, ...)
-         return self:get(rawget(this, "__under_uri"), method,
+         return self:get(method,
                          rawget(this, "__name"), {...}, rawget(this, "__server_id"))
       end
    end
@@ -39,8 +39,7 @@ function This:init()
    if self.memoize_constant then
       self.table_meta.__index = function(this, key)  -- _server_-side table, that is.
          -- Don't have it yet in any case.
-         local got = self:get(rawget(this, "__under_uri"),
-                              "index", key, key, rawget(this, "__server_id"))
+         local got = self:get("index", key, key, rawget(this, "__server_id"))
          -- See if constant.
          local c = rawget(this, "__constant")
          if (c == true) or c and c:inside(key, got) then
@@ -50,8 +49,7 @@ function This:init()
       end
    else
       self.table_meta.__index = function(this, key)
-         return self:get(rawget(this, "__under_uri"), "index",
-                         key, key, rawget(this, "__id"))
+         return self:get("index", key, key, rawget(this, "__id"))
       end
    end
 
@@ -59,7 +57,8 @@ function This:init()
    self.fun_meta = { __call = self.table_meta.__call }
 end
 
-local figure_id = unpack(require "alt_require.server.figure_id")
+-- Only reads ids, basically, no new ones.
+local figure_id = require("alt_require.server.figure_id")[1]
 
 -- TODO synchronizing tables might be something that can be separated out.
 --   including allowing for loops and optimizations by synchronizing accross
@@ -134,13 +133,13 @@ end
 
 local KeyIn = require "alt_require.KeyIn"
 
-function This:get(under_uri, method, name, args, id)
+function This:get(method, name, args, id)
    assert(type(method) == "string")
    assert(type(id) == "string")
    assert(method ~= "call" or type(args) == "table")
    local name = tostring(name)
 
-   local url = table.concat({under_uri or self.under_uri, method, name, id}, "/")
+   local url = table.concat({self.under_uri, method, name, id}, "/")
    local data_list, ret_list =
       self:send_n_receive(url, self:prep_for_send(args, {})), {}
 
@@ -152,9 +151,9 @@ function This:get(under_uri, method, name, args, id)
          ret = self.server_vals[id]
          if not ret then
             if self.funs_as_funs then  -- Note then you cannot send the function back.
-               ret = function(...) return self:get(under_uri, "call", name, {...}, id) end
+               ret = function(...) return self:get("call", name, {...}, id) end
             else
-               ret = setmetatable({ __under_uri=under_uri, __server_id=id, __name=name},
+               ret = setmetatable({__server_id=id, __name=name},
                   self.fun_meta)
             end
             self.server_vals[id] = ret
@@ -165,8 +164,7 @@ function This:get(under_uri, method, name, args, id)
          if not ret then
             local const = data.const
             local const = (type(const) == "table" and KeyIn:new(const)) or const
-            ret = setmetatable({ __under_uri=under_uri, __server_id=id, __name=name,
-                                 __constant = const },
+            ret = setmetatable({__server_id=id, __name=name, __constant = const },
                self.table_meta)
             self.server_vals[id] = ret
          end
@@ -191,35 +189,13 @@ end
 
 This.require = require
 
-function This:require_fun(local_require, dict, strict)
-   local function into_sel(sel)
-      return function(state)
-         return self:get(sel, "index", "require", nil, "global")(state.package)
-      end
+function This:require_fun()
+   return function(state)
+      return self:get("index", "require", nil, "global")(state.package)
    end
-   local function strict_fun(state)
-      local str = state.package
-      local sel = dict[str]
-      if sel then
-         return into_sel(sel ~= true and sel or nil)
-      else
-         return (local_require or self.require)(str)
-      end
-   end
-   local function loose_fun(state)
-      local str = state.package
-      for _, el in ipairs(dict) do
-         if string.find(str, "^", string.gsub("[.]", "[.]", el[1])) then
-            return into_sel(el[2])
-         end
-      end
-      return (local_require or self.require)(str)
-   end
-   return (dict == nil and into_sel(nil)) or (strict and strict_fun) or loose_fun
 end
-function This:globals(local_require, ...)
-   return { __envname="http-client",
-            require = self:require_fun(local_require, ...) }
+function This:globals()
+   return { __envname="http-client", require = self:require_fun() }
 end
 
 return This

@@ -1,4 +1,4 @@
-local function figure(val)
+local function figure(val)  -- Reads it.
    assert(({table=true, ["function"]=true})[type(val)], val)
    return string.lower(string.match(tostring(val), "0x([%x]+)"))
 end
