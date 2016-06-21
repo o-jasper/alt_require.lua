@@ -38,6 +38,9 @@ Once installed `local alt_require = require "alt_require"`.
     If no `globals.require` is provided, a default that keeps the sandbox going is
     used.
 
+* **TODO** `.splice_require(list)`, list of `{package_names_below, require_fun}`
+  that selects require functions based on package name.
+
 You'll want to actually do something with it, some `pass_through` are in
 `"alt_require.pt."`, they're pretty simple. In there: (`prep="alt_require.pt."`)
 
@@ -50,6 +53,9 @@ You'll want to actually do something with it, some `pass_through` are in
    
    Of course, `inpackage_counts` can collect what accesses what, and then
    this one can use the resulting table to enforce it.
+
+   Although no guarantee everything was recorded, or that the recording doesn't
+   contain anything nasty.. it may mis-block.
  
 * `require(prep.."print")(table)` Prints what global is accessed from
   where.
@@ -108,14 +114,16 @@ run as-is. `C = require("alt_require.client.http")` is the class.
 * `c = C:new{under_uri = "http://localhost:26019/alt_require"}`
   With just the default site to send the requests.
 
-* `c:globals(local_require, require_selection)`
+* `c:require_fun()` a function that can be entered into one of the globals
+  of `.require`. Use `.splice_require` with multiple cases leading to
+  different server uris to use different servers in different case.
 
-  The globals with the `c:require_fun(local_require, require_selection)` in it.
-  Careful that you don't override `globals.require` afterward.
+  Infact, the servers themselves can also run that way. **TODO** a thingy
+  that sets up an entire network.
   
-  If `require_selection` not `nil` then if `require_selection[package_name]`
-  then it will ask the server, and otherwise it will use `local_require`
-  to run it locally.
+* `c:globals()` has the above require function in it.
+
+It should work accross `ssh` and stuff. `ssh -L`
 
 #### (Current)Limitations:
 
@@ -159,6 +167,8 @@ but the globals it produces, like `require` can be modified to do so.
 It is under the MIT license accompanied.
 
 ## TODO
+* Setting up a whole network.
+
 * Much better documentation regarding the core part.
 
 * Could be more tests on external projects, and the way server-client is
